@@ -1,0 +1,16 @@
+---
+- name: Minimun configuration of server
+  hosts: '{{ target }}'
+  remote_user: '{{ user }}'
+  become_method: su
+  become_user: root
+  become: true
+
+  pre_tasks:
+    - name: Include value of secret vars to access secrets
+      include_vars: vault/value_secret_vars.yml
+
+  roles:
+    - role: elsudano.base
+      tags:
+      - 'base'

@@ -1,0 +1,8 @@
+---
+- include_tasks: tasks/base.yml
+- include_tasks: tasks/webmin.yml
+- include_tasks: tasks/cockpit.yml
+  when: ansible_os_family == 'RedHat'
+- include_tasks: tasks/postgresql.yml
+- include_tasks: tasks/mariadb.yml
+- include_tasks: tasks/nextcloud.yml
