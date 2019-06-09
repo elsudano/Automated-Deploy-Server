@@ -8,7 +8,7 @@
 
   pre_tasks:
     - name: Include value of secret vars to access secrets
-      include_vars: vault/value_secret_vars.yml
+      include_vars: ../vault/value_secret_vars.yml
 
   roles:
     - role: elsudano.base

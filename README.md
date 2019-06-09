@@ -10,6 +10,7 @@ The other way for this action is to use a storage file inside the vault to assig
 
 ```bash
 git clone https://github.com/elsudano/Automated-Deploy-Server.git
+export EDITOR="nano"
 make bootstrap
 ```
 
