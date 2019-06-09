@@ -19,10 +19,10 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 	@unzip -q -o -d /tmp /tmp/terraform.zip
 	@sudo mv /tmp/terraform /usr/bin/
 --Fedora:
-	@sudo dnf install python3-fabric.noarch ansible.noarch -y
+	@sudo dnf install wget.x86_64 unzip.x86_64 python3-fabric.noarch ansible.noarch -y
 --Ubuntu:
 	@sudo apt update -y
-	@sudo apt install unzip fabric ansible -y
+	@sudo apt install wget unzip fabric ansible -y
 --i386:
 	@wget -q -O /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TFVER}/terraform_${TFVER}_linux_386.zip
 --x86-64:
@@ -71,8 +71,8 @@ clean: --clean$(OS) --removefiles ## Clean the project, !!WARNING¡¡ all data s
 	@sudo rm -f /usr/bin/terraform
 	@rm -fR ansible/roles/*
 --cleanFedora:
-	@sudo dnf remove python3-fabric.noarch ansible.noarch -y
+	@sudo dnf remove wget.x86_64 unzip.x86_64 python3-fabric.noarch ansible.noarch -y
 --cleanUbuntu:
-	@sudo apt remove python3-fabric.noarch ansible.noarch -y
+	@sudo apt remove wget unzip fabric ansible -y
 
 .PHONY = $(PHONY)
