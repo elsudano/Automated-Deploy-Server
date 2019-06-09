@@ -41,7 +41,7 @@ PHONY += upload
 upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 PHONY += download
-download: --download decrypt ## Sync repository downloading the files and decrypt cault files for editing
+download: --download decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
 
 --upload: 
 	@git add .
@@ -64,13 +64,15 @@ ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionalit
 ansible-check: $(INVENTORY) ## Verify all task for in the servers but not apply configuration
 	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff --check $(RUN_ARGS) -l $*
 
-PHONY += clean
-clean: --clean$(OS) --removefiles ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
-
---removefiles:
-	@rm -f /tmp/terraform*
-	@sudo rm -f /usr/bin/terraform
+soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
+	@rm -f /tmp/terraform*
+
+PHONY += hard_clean
+hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
+
+--removeTerraform:
+	@sudo rm -f /usr/bin/terraform
 --cleanFedora:
 	@sudo dnf remove wget.x86_64 unzip.x86_64 python3-fabric.noarch ansible.noarch -y
 --cleanUbuntu:

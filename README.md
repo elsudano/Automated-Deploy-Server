@@ -10,6 +10,7 @@ The other way for this action is to use a storage file inside the vault to assig
 
 ```bash
 git clone https://github.com/elsudano/Automated-Deploy-Server.git
+echo "password" > ansible/vault/credentials.txt
 export EDITOR="nano"
 make bootstrap
 ```
@@ -28,6 +29,7 @@ For normal use, I have created a Makefile with some commands to help us, among t
 * `make decrypt` This command decrypt the vault files for modify them
 * `make ansible-check` This command check if deploy is correct in the servers.
 * `make ansible-run` This command run deploy on servers.
+* `make clean` ¡¡WARNING!! This command delete all files of roles and remove unzip, ansible, terraform and fabric.
 
 # Terraform
 
