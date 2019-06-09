@@ -39,7 +39,7 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 upload: ## Encrypt vault files and add, commit the files with message, for ex. upload-"Add files"
 	@ansible-vault encrypt ansible/vault/*.yml
 	@git add .
-	@git commit -m $(MESSAGE)
+	@git commit -m "$(MESSAGE)"
 	@git push
 
 download: ## Sync repository downloading the files and decrypt cault files for editing
