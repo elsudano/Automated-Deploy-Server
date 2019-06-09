@@ -22,7 +22,7 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 	@sudo dnf install python3-fabric.noarch ansible.noarch -y
 --Ubuntu:
 	@sudo apt update -y
-	@sudo apt install python3-fabric.noarch ansible -y
+	@sudo apt install unzip fabric ansible -y
 --i386:
 	@wget -q -O /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TFVER}/terraform_${TFVER}_linux_386.zip
 --x86-64:
@@ -31,10 +31,10 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
---vault: --check_vault_file $(VAULT_CREDENTIALS) 
+--vault: --check_vault_file $(VAULT_CREDENTIALS)
 	@ansible-vault decrypt ansible/vault/*.yml
 
---check_vault_file: $(VAULT_CREDENTIALS)
+--check_vault_file:
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
 
 PHONY += upload
