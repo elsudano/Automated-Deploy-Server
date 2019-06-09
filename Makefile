@@ -32,18 +32,25 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
 --vault: --check_vault_file $(VAULT_CREDENTIALS) 
+	@ansible-vault decrypt ansible/vault/*.yml
 
 --check_vault_file: $(VAULT_CREDENTIALS)
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
 
-upload: ## Encrypt vault files and add, commit the files with message, for ex. upload-"Add files"
-	@ansible-vault encrypt ansible/vault/*.yml
+upload: encrypt ## Encrypt vault files and add, commit the files with message, for ex. upload MESSAGE="Add files"
 	@git add .
 	@git commit -m "$(MESSAGE)"
 	@git push
+	decrypt
 
 download: ## Sync repository downloading the files and decrypt cault files for editing
 	@git pull --rebase
+	decrypt
+
+encrypt: ## Encrypt files for uploading to repository
+	@ansible-vault encrypt ansible/vault/*.yml
+
+decrypt: ## Decrypt files for working with them
 	@ansible-vault decrypt ansible/vault/*.yml
 
 ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionality
