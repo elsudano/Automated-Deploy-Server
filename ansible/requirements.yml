@@ -3,9 +3,5 @@
 #   version: "0.0.1"
 
 - src: https://github.com/geerlingguy/ansible-role-certbot.git
-  scm: git
-  version: "0.0.1"
-
 - src: https://github.com/geerlingguy/ansible-role-firewall.git
-  scm: git
-  version: "0.0.1"
+- src: https://github.com/geerlingguy/ansible-role-security.git
