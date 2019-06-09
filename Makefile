@@ -43,11 +43,10 @@ upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the file
 PHONY += download
 download: --download decrypt ## Sync repository downloading the files and decrypt cault files for editing
 
---upload: encrypt 
+--upload: 
 	@git add .
 	@git commit -m "$(MESSAGE)"
 	@git push
-	decrypt
 
 --download:
 	@git pull --rebase
