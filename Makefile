@@ -49,6 +49,7 @@ download: --download decrypt ## Sync repository downloading the files and decryp
 	@git push
 
 --download:
+	@git checkout -- .
 	@git pull --rebase
 
 encrypt: ## Encrypt files for uploading to repository
