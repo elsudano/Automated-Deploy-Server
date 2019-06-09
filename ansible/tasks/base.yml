@@ -1,7 +1,7 @@
 ---
 - name: Minimun configuration of server
-  hosts: '{{ target }}'
-  remote_user: '{{ user }}'
+  hosts: '{{ base.target }}'
+  remote_user: '{{ base.user }}'
   become_method: su
   become_user: root
   become: true
