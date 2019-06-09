@@ -43,9 +43,12 @@ upload: encrypt ## Encrypt vault files and add, commit the files with message, f
 	@git push
 	decrypt
 
-download: ## Sync repository downloading the files and decrypt cault files for editing
+download: decrypt ## Sync repository downloading the files and decrypt cault files for editing
 	@git pull --rebase
+<<<<<<< HEAD
 	decrypt
+=======
+>>>>>>> 6aa65c743c629ef2f7b4ea0b5cde2992cde6e0e6
 
 encrypt: ## Encrypt files for uploading to repository
 	@ansible-vault encrypt ansible/vault/*.yml
