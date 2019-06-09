@@ -38,7 +38,7 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
 
 PHONY += upload
-upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for ex. upload MESSAGE="Add files"
+upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 PHONY += download
 download: --download decrypt ## Sync repository downloading the files and decrypt cault files for editing
