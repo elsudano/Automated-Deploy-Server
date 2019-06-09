@@ -37,18 +37,20 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 --check_vault_file: $(VAULT_CREDENTIALS)
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
 
-upload: encrypt ## Encrypt vault files and add, commit the files with message, for ex. upload MESSAGE="Add files"
+PHONY += upload
+upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for ex. upload MESSAGE="Add files"
+
+PHONY += download
+download: --download decrypt ## Sync repository downloading the files and decrypt cault files for editing
+
+--upload: encrypt 
 	@git add .
 	@git commit -m "$(MESSAGE)"
 	@git push
 	decrypt
 
-download: decrypt ## Sync repository downloading the files and decrypt cault files for editing
+--download:
 	@git pull --rebase
-<<<<<<< HEAD
-	decrypt
-=======
->>>>>>> 6aa65c743c629ef2f7b4ea0b5cde2992cde6e0e6
 
 encrypt: ## Encrypt files for uploading to repository
 	@ansible-vault encrypt ansible/vault/*.yml
@@ -62,11 +64,13 @@ ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionalit
 ansible-check: $(INVENTORY) ## Verify all task for in the servers but not apply configuration
 	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff --check $(RUN_ARGS) -l $*
 
-clean: --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
+PHONY += clean
+clean: --clean$(OS) --removefiles ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
+
+--removefiles:
 	@rm -f /tmp/terraform*
 	@sudo rm -f /usr/bin/terraform
 	@rm -fR ansible/roles/*
-
 --cleanFedora:
 	@sudo dnf remove python3-fabric.noarch ansible.noarch -y
 --cleanUbuntu:
