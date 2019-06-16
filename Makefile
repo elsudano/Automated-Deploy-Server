@@ -6,6 +6,9 @@ OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
 TFVER = 0.12.0
 
+#-------------------------------------------------------#
+#    Public Functions                                   #
+#-------------------------------------------------------#
 PHONY += help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -15,6 +18,34 @@ help:
 PHONY += bootstrap 
 bootstrap: --dependencies --vault --requirements ## Prepare of environment and the security for the deploy
 
+PHONY += upload
+upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
+
+PHONY += download
+download: --download decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
+
+encrypt: ## Encrypt files for uploading to repository
+	@ansible-vault encrypt ansible/vault/*.yml
+
+decrypt: ## Decrypt files for working with them
+	@ansible-vault decrypt ansible/vault/*.yml
+
+ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionality
+	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff $(RUN_ARGS) -l $*
+
+ansible-check: $(INVENTORY) ## Verify all task for in the servers but not apply configuration
+	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff --check $(RUN_ARGS) -l $*
+
+soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
+	@rm -fR ansible/roles/*
+	@rm -f /tmp/terraform*
+
+PHONY += hard_clean
+hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
+
+#-------------------------------------------------------#
+#    Private Functions                                  #
+#-------------------------------------------------------#
 --dependencies: --$(OS) --$(ARCH)
 	@unzip -q -o -d /tmp /tmp/terraform.zip
 	@sudo mv /tmp/terraform /usr/bin/
@@ -37,12 +68,6 @@ bootstrap: --dependencies --vault --requirements ## Prepare of environment and t
 --check_vault_file:
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
 
-PHONY += upload
-upload: encrypt --upload decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
-
-PHONY += download
-download: --download decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
-
 --upload: 
 	@git add .
 	@git commit -m "$(MESSAGE)"
@@ -51,25 +76,6 @@ download: --download decrypt ## Downloading the files and decrypt vault files fo
 --download:
 	@git checkout -- .
 	@git pull --rebase
-
-encrypt: ## Encrypt files for uploading to repository
-	@ansible-vault encrypt ansible/vault/*.yml
-
-decrypt: ## Decrypt files for working with them
-	@ansible-vault decrypt ansible/vault/*.yml
-
-ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionality
-	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff $(RUN_ARGS) -l $*
-
-ansible-check: $(INVENTORY) ## Verify all task for in the servers but not apply configuration
-	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff --check $(RUN_ARGS) -l $*
-
-soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
-	@rm -fR ansible/roles/*
-	@rm -f /tmp/terraform*
-
-PHONY += hard_clean
-hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
 
 --removeTerraform:
 	@sudo rm -f /usr/bin/terraform
