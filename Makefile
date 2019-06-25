@@ -2,6 +2,7 @@ SHELL = /bin/bash
 
 VAULT_CREDENTIALS = ansible/vault/credentials.txt
 INVENTORY = ansible/inventory
+BASE_TERRAFORM = terraform/environments/
 OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
 TFVER = 0.12.0
@@ -26,9 +27,11 @@ download: --download decrypt ## Downloading the files and decrypt vault files fo
 
 encrypt: ## Encrypt files for uploading to repository
 	@ansible-vault encrypt ansible/vault/*.yml
+	@ansible-vault encrypt terraform/vault/*.tfvars
 
 decrypt: ## Decrypt files for working with them
 	@ansible-vault decrypt ansible/vault/*.yml
+	@ansible-vault decrypt terraform/vault/*.tfvars
 
 ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionality
 	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff $(RUN_ARGS) -l $*
@@ -36,12 +39,15 @@ ansible-run: $(INVENTORY) ## Run all task necessary for the correct functionalit
 ansible-check: $(INVENTORY) ## Verify all task for in the servers but not apply configuration
 	ansible-playbook -i $(INVENTORY) ansible/root.yml --diff --check $(RUN_ARGS) -l $*
 
+devdeploy: vault/terraform.tfvars $(BASE_TERRAFORM)/02-dev/main.tf $(BASE_TERRAFORM)/02-dev/variables.tf $(BASE_TERRAFORM)/02-dev/outputs.tf
+	terraform plan -var-file="../../vault/terraform.tfvars"
+
 soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
 	@rm -f /tmp/terraform*
 
 PHONY += hard_clean
-hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed
+hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
 #    Private Functions                                  #
@@ -64,6 +70,7 @@ hard_clean: soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WA
 
 --vault: --check_vault_file $(VAULT_CREDENTIALS)
 	@ansible-vault decrypt ansible/vault/*.yml
+	@ansible-vault decrypt terraform/vault/*.tfvars
 
 --check_vault_file:
 	@bash -c 'if [ ! -s $(VAULT_CREDENTIALS) ]; then echo "Please create the $(VAULT_CREDENTIALS) file with the password inside"; fi;'
