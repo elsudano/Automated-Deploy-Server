@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export OVH_ENDPOINT=ovh-eu
+export OVH_APPLICATION_KEY=[application_key]
+export OVH_APPLICATION_SECRET=[application_secret]
+export OVH_CONSUMER_KEY=[consumer_key]

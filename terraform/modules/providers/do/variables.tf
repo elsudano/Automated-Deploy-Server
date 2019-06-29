@@ -1,6 +1,6 @@
 variable "do_token" {
   type        = "string"
-  description = "(Required) This is the DO API token. "
+  description = "(Required) This is the DO API token."
 }
 /*
 variable "do_spaces_access_id" {
@@ -19,7 +19,3 @@ variable "do_api_endpoint" {
   default     = "https://api.digitalocean.com"
 }
 */
-variable "do_ssh_key" {
-  type        = "string"
-  description = "(Optional) Path of file that contains public part of key"
-}

@@ -12,33 +12,27 @@ The other way for this action is to use a storage file inside the vault to assig
 git clone https://github.com/elsudano/Automated-Deploy-Server.git
 echo "password" > ansible/vault/credentials.txt
 export EDITOR="nano"
-make bootstrap
+make 01_prerequisites
+make 02_bootstrap
 ```
 
 Keep in mind that the `EDITOR` variable is setting only in session, for the setting be permanent is necessary put in your `~/.bashrc` the next line: `export EDITOR="nano"`
 
 # How to use:
 
-For normal use, I have created a Makefile with some commands to help us, among them are the following:
-
-* `make` This command show in screen the usage help.
-* `make bootstrap` This command prepare the environment for working.
-* `make upload MESSAGE="whatever"` This command run encrypt vault files, git add, git commit with MESSAGE and push changes to repository.
-* `make download` This command run git pull and decrypt vault files.
-* `make encrypt` This command encrypt the vault files for uploading to repository
-* `make decrypt` This command decrypt the vault files for modify them
-* `make ansible-check` This command check if deploy is correct in the servers.
-* `make ansible-run` This command run deploy on servers.
-* `make clean` ¡¡WARNING!! This command delete all files of roles and remove unzip, ansible, terraform and fabric.
+For normal use, I have created a Makefile with some commands to help us, with `make` show in screen the usage help.
 
 # Terraform
 
-For create the infrastructure of my server I'm using Terraform because is possible make test in VirtualBOX, AWS or DigitalOcean.
+For create the infrastructure of my server I'm using Terraform because is possible make test in VirtualBOX, AWS, DigitalOcean and OVH.
 
 #### 1. Pre-Requisites
 
+For create the necessary infrastructure is needed install Terraform in your system, for that run `make 01 prerequisites` in the root path of the project
 
 # Ansible
+
+With this program we installing and setting our remote server
 
 #### 1. Pre-Requisites
 

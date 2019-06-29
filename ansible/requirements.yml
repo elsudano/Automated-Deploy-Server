@@ -1,7 +1,48 @@
-# - src: git@github.com:elsudano/elsudano-base.git
+- src: geerlingguy.certbot
+  version: "3.0.2"
+
+- src: geerlingguy.repo-epel
+  version: "1.2.4"
+
+- src: geerlingguy.firewall
+  version: "2.4.1"
+
+- src: geerlingguy.ntp
+  version: "1.6.3"
+
+- src: geerlingguy.security
+  version: "1.8.0"
+
+- src: geerlingguy.ansible
+  version: "2.0.1"
+
+- src: geerlingguy.apache
+  version: "3.0.3"
+
+- src: geerlingguy.nginx
+  version: "2.7.0"
+
+- src: geerlingguy.php
+  version: "3.7.0"
+
+- src: geerlingguy.php-mysql
+  version: "2.0.2"
+
+- src: geerlingguy.php-pgsql
+  version: "1.0.1"
+
+- src: geerlingguy.php-memcached
+  version: "2.0.2"
+
+- src: geerlingguy.memcached
+  version: "1.0.8"
+
+- src: geerlingguy.mysql
+  version: "2.9.4"
+
+- src: geerlingguy.postgresql
+  version: "1.4.6"
+ 
+# - src: git@github.com:elsudano/ansible-base.git
 #   scm: git
 #   version: "0.0.1"
-
-- src: https://github.com/geerlingguy/ansible-role-certbot.git
-- src: https://github.com/geerlingguy/ansible-role-firewall.git
-- src: https://github.com/geerlingguy/ansible-role-security.git
