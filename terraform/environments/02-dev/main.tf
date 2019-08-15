@@ -8,6 +8,12 @@ module "do_frontend" {
   do_public_key    = "${var.do_public_key}"
   do_private_key   = "${var.do_private_key}"
 }
+module "vmws_frontend" {
+  source          = "../../modules/compute/vmws_frontend"
+  vmws_user       = "${var.vmws_user}"
+  vmws_password   = "${var.vmws_password}"
+  vmws_url_to_api = "${var.vmws_url_to_api}"
+}
 module "do_net" {
   source        = "../../modules/networking/do_net"
   do_token      = "${var.do_token}"
