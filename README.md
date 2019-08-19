@@ -11,6 +11,11 @@ The other way for this action is to use a storage file inside the vault to assig
 ```bash
 git clone https://github.com/elsudano/Automated-Deploy-Server.git
 echo "password" > ansible/vault/credentials.txt
+mv ansible/vault/env_vars_ovh.example ansible/vault/env_vars_ovh.sh
+```
+After that configuring this files, you run the next commnads for begining deploy the remote server
+
+```bash
 export EDITOR="nano"
 make 01_prerequisites
 make 02_bootstrap

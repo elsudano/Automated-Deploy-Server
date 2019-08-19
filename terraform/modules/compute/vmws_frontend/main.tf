@@ -1,6 +1,6 @@
-module "vmworkstation" {
-  source          = "../../providers/vmworkstation"
-  vmws_user       = "${var.vmws_user}"
-  vmws_password   = "${var.vmws_password}"
-  vmws_url_to_api = "${var.vmws_url_to_api}"
+module "vmws" {
+  source          = "../../providers/vmws"
+}
+resource "vmworkstation_vms" "list_vms" {
+  name  = "list_vms"
 }

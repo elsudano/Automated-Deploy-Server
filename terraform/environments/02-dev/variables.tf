@@ -1,7 +1,3 @@
-variable "do_token" {
-  type        = "string"
-  description = "(Required) This is the DO API token. "
-}
 variable "do_name_droplet" {
   type        = "string"
   description = "(Required) The Name of Droplet "
@@ -22,30 +18,6 @@ variable "do_private_key" {
 variable "do_public_key" {
   type        = "string"
   description = "(Required) Containt the Public KEY access to remote instance"
-}
-variable "vmws_user" {
-  type        = "string"
-  description = "(Required) This is a User to use for the API REST of VmWare Workstation Pro."
-}
-variable "vmws_password" {
-  type        = "string"
-  description = "(Required) This is a Password to use for the API REST of VmWare Workstation Pro."
-}
-variable "vmws_url_to_api" {
-  type        = "string"
-  description = "(Required) This is a URL to connect for the API REST of VmWare Workstation Pro."
-}
-variable "ovh_application_key" {
-  type        = "string"
-  description = "(Required) This is the OVH API token."
-}
-variable "ovh_application_secret" {
-  type        = "string"
-  description = "(Required) Secret of the application key"
-}
-variable "ovh_consumer_key" {
-  type        = "string"
-  description = "(Required) This is a consumer key of the OVH platform"
 }
 variable "ovh_zone" {
   type        = "string"

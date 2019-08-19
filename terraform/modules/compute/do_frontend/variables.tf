@@ -1,7 +1,3 @@
-variable "do_token" {
-  type        = "string"
-  description = "(Required) The ID of droplet for assign to public IP"
-}
 variable "do_name_droplet" {
   type        = "string"
   description = "(Required) The Name of Droplet "

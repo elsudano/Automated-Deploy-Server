@@ -1,5 +1,5 @@
 [production]
-web.sudano.net ansible_host=web.sudano.net short_host=server
+localhost ansible_host=web.server.net short_host=server
 
 [test]
-192.168.1.38 ansible_host=server-test short_host=test
+localhost ansible_host=server-test short_host=test

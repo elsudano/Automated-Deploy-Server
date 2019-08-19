@@ -1,0 +1,53 @@
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: Install all necessary software for Nextcloud
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - wget
+      - nano
+      - unzip
+      - php-mysqlnd
+      - php-zip
+      - php-devel
+      - php-gd
+      - php-mcrypt
+      - php-mbstring
+      - php-curl
+      - php-xml
+      - php-pear
+      - php-bcmath
+      - php-json
+      - php-pdo
+      - php-pecl-apcu
+      - php-pecl-apcu-devel
+    enablerepo: remi-php73
+    state: present
+    when: ansible_os_family == "RedHat"
+
+- name: Download and unzip the last version of Nextcloud
+  unarchive:
+    src: https://download.nextcloud.com/server/releases/nextcloud-16.0.3.zip
+    dest: /nextcloud
+    remote_src: yes
+
+# sudo chown apache:apache /nextcloud/ -R
+# sudo yum-config-manager --enable remi-php73
+# sudo yum -y install httpd php php-cli 
+# 
+# 
+# 
+# chcon -R -t httpd_sys_content_t /nextcloud
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/data(/.*)?'
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/config(/.*)?'
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/apps(/.*)?'
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/.htaccess'
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/.user.ini'
+# semanage fcontext -a -t httpd_sys_rw_content_t '/nextcloud/3rdparty/aws/aws-sdk-php/src/data/logs(/.*)?'
+# 
+# restorecon -R '/nextcloud/'
+# 
+# setsebool -P httpd_can_network_connect on

@@ -68,7 +68,6 @@ PHONY += download
 13_soft_clean: 10_encrypt ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
 	@rm -fR .terraform/
-	@rm -f *.tfstate
 	@rm -f /tmp/terraform*
 	@rm -fR ./*.backup
 
@@ -91,12 +90,12 @@ PHONY += hard_clean
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
---vault: --check_vault_file $(VAULT_ANSIBLE)/credentials.txt
+--vault: --check_vault_file 
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 
---check_vault_file:
+--check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars_ovh.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/env_vars_ovh.sh ]; then echo "Please create and complete the $(VAULT_ANSIBLE)/env_vars_ovh.sh file with correct values inside"; fi;'
 

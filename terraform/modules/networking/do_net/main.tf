@@ -1,6 +1,5 @@
 module "do" {
   source        = "../../providers/do"
-  do_token      = "${var.do_token}"
 }
 resource "digitalocean_floating_ip" "public_ip" {
   region            = "lon1"

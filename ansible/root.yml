@@ -6,13 +6,22 @@
   become_user: root
   become: true
 
+  pre_tasks:
+    - name: Including all vars to run all roles and tasks
+      include_vars: vault/value_secret_vars.yml
+
   roles:
-    - { role: geerlingguy.repo-epel, become: yes, tags: [ 'epel' ] }
+    - { role: geerlingguy.repo-epel, become: yes, tags: [ 'epel' ], when: ansible_os_family == 'RedHat'  }
+    - { role: geerlingguy.firewall, become: yes, tags: [ 'firewall' ] }
+    #- { role: semuadmin.webmin, become: yes, tags: [ 'webmin' ] }
+    - { role: oasis_roles.cockpit, become: yes, tags: [ 'cockpit' ] }
     - { role: geerlingguy.ntp, become: yes, tags: [ 'ntp' ] }
     #- { role: geerlingguy.security, become: yes, tags: [ 'security' ] }
     - { role: geerlingguy.ansible, become: yes, tags: [ 'ansible' ] }
     - { role: geerlingguy.apache, become: yes, tags: [ 'apache' ] }
     #- { role: geerlingguy.nginx, become: yes, tags: [ 'nginx' ] }
+    - { role: geerlingguy.repo-remi, become: yes, tags: [ 'remi' ], when: ansible_os_family == 'RedHat' }
+    - { role: geerlingguy.php-versions, become: yes, tags: [ 'version', 'php73' ] }
     - { role: geerlingguy.php, become: yes, tags: [ 'php' ] }
     - { role: geerlingguy.php-mysql, become: yes, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.php-pgsql, become: yes, tags: [ 'php-pgsql' ] }
@@ -20,4 +29,7 @@
     - { role: geerlingguy.memcached, become: yes, tags: [ 'memcached' ] }
     - { role: geerlingguy.mysql, become: yes, tags: [ 'mysql' ] }
     - { role: geerlingguy.postgresql, become: yes, tags: [ 'postgresql' ] }
-#    - { role: elsudano.ansible-base, become: no, tags: [ 'base' ] }
+
+  tasks:
+    - { name: Base Configuration, include_tasks: tasks/base.yml, tags: [ 'base' ] }
+    - { name: Nextcloud Configuration, include_tasks: tasks/nextcloud.yml, tags: [ 'nextcloud' ] }

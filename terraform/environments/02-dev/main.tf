@@ -1,7 +1,5 @@
-
 module "do_frontend" {
   source           = "../../modules/compute/do_frontend"
-  do_token         = "${var.do_token}"
   do_name_droplet  = "${var.do_name_droplet}"
   do_image_droplet = "${var.do_image_droplet}"
   do_tags_droplet  = "${var.do_tags_droplet}"
@@ -10,20 +8,13 @@ module "do_frontend" {
 }
 module "vmws_frontend" {
   source          = "../../modules/compute/vmws_frontend"
-  vmws_user       = "${var.vmws_user}"
-  vmws_password   = "${var.vmws_password}"
-  vmws_url_to_api = "${var.vmws_url_to_api}"
 }
 module "do_net" {
   source        = "../../modules/networking/do_net"
-  do_token      = "${var.do_token}"
   do_droplet_id = "${module.do_frontend.first_droplet_id}"
 }
 module "ovh_domain" {
   source                 = "../../modules/networking/ovh_domain"
-  ovh_application_key    = "${var.ovh_application_key}"
-  ovh_application_secret = "${var.ovh_application_secret}"
-  ovh_consumer_key       = "${var.ovh_consumer_key}"
   ovh_zone               = "${var.ovh_zone}"
   ovh_subdomain          = "${var.ovh_subdomain}"
   ovh_target             = "${module.do_net.public_ip}"

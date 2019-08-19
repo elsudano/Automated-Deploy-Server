@@ -4,6 +4,9 @@
 - src: geerlingguy.repo-epel
   version: "1.2.4"
 
+- src: geerlingguy.repo-remi
+  version: "1.2.0"
+
 - src: geerlingguy.firewall
   version: "2.4.1"
 
@@ -22,8 +25,8 @@
 - src: geerlingguy.nginx
   version: "2.7.0"
 
-- src: geerlingguy.php
-  version: "3.7.0"
+- src: geerlingguy.php-versions
+  version: "3.1.0"
 
 - src: geerlingguy.php-mysql
   version: "2.0.2"
@@ -42,7 +45,11 @@
 
 - src: geerlingguy.postgresql
   version: "1.4.6"
- 
+
+- src: semuadmin.webmin
+
+- src: oasis_roles.cockpit
+
 # - src: git@github.com:elsudano/ansible-base.git
 #   scm: git
 #   version: "0.0.1"

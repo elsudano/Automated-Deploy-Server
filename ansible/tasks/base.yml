@@ -1,16 +1,4 @@
 ---
-- name: Minimun configuration of server
-  hosts: '{{ base.target }}'
-  remote_user: '{{ base.user }}'
-  become_method: su
-  become_user: root
-  become: true
-
-  pre_tasks:
-    - name: Include value of secret vars to access secrets
-      include_vars: ../vault/value_secret_vars.yml
-
-  roles:
-    - role: elsudano.base
-      tags:
-      - 'base'
+- name: Disable SELinux
+  selinux:
+    state: disabled
