@@ -3,7 +3,7 @@ module "do" {
 }
 resource "digitalocean_ssh_key" "default" {
   name       = "SSH Key"
-  public_key = "${file(var.do_public_key)}"
+  public_key = "${file(var.public_key)}"
 }
 resource "digitalocean_droplet" "first_droplet_small" {
   name               = "${var.do_name_droplet}"
@@ -27,6 +27,6 @@ resource "digitalocean_droplet" "first_droplet_small" {
     host        = "${digitalocean_droplet.first_droplet_small.ipv4_address}"
     user        = "root"
     password    = ""
-    private_key = "${file(var.do_private_key)}"
+    private_key = "${file(var.private_key)}"
   }
 }

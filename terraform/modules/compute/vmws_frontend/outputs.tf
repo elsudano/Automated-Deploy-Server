@@ -1,4 +1,4 @@
-/* output list_vms {
-  value       = "${vmworkstation.list_vms}"
-  description = "This is a ID of the first VM in VmWare Workstation Pro resources"
-} */
+# output name_test_machine {
+#   value       = "${vmworkstation_vms.test_machine}"
+#   description = "This is the first VM in VmWare Workstation Pro resources"
+# }

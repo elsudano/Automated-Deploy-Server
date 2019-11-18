@@ -1,8 +1,8 @@
 ---
 - name: Apply configuration to virtual machine
   hosts: all
-  remote_user: root
-  become_method: su
+  # remote_user: centos
+  become_method: sudo
   become_user: root
   become: true
 

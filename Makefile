@@ -9,10 +9,12 @@ PRODIR = $(BASE_TERRAFORM)/00-pro
 PREDIR = $(BASE_TERRAFORM)/01-pre
 DEVDIR = $(BASE_TERRAFORM)/02-dev
 # This has to be solved, because when there is more than one it is a problem
-PUBLIC_IP = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \")
+# PUBLIC_IP = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \")
+PUBLIC_IP = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \")
+USER = $(shell cat $(VAULT_TERRAFORM)/terraform.tfvars | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \")
 OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
-TFVER = 0.12.0
+TFVER = 0.12.8
 
 #-------------------------------------------------------#
 #    Public Functions                                   #
@@ -41,11 +43,13 @@ PHONY += download
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
+	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
 11_decrypt: ## Decrypt files for working with them
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
+	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
 03_dev_deploy_check: --dev_terraform_init --check_vault_file ## Check the modify of deploy the new infrastructure for environment of develop
 	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform plan -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
@@ -57,13 +61,13 @@ PHONY += download
 	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform destroy -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
 
 05_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration
-	@ansible-playbook ansible/root.yml --diff --check -u centos -i $(PUBLIC_IP),
+	@ansible-playbook ansible/root.yml --diff --check -u $(USER) -i $(PUBLIC_IP),
 
 06_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality
-	@ansible-playbook ansible/root.yml --diff -u centos -i $(PUBLIC_IP),
+	@ansible-playbook ansible/root.yml --diff -u $(USER) -i $(PUBLIC_IP),
 
 07_connect: $(PRIVATE_KEY) ## Connect to the remote instance with the key for deployment
-	@ssh -l centos -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP)
+	@ssh -l $(USER) -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP)
 
 13_soft_clean: 10_encrypt ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
@@ -71,7 +75,7 @@ PHONY += download
 	@rm -f /tmp/terraform*
 	@rm -fR ./*.backup
 
-PHONY += hard_clean
+PHONY += 14_hard_clean
 14_hard_clean: 13_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
@@ -90,10 +94,8 @@ PHONY += hard_clean
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
---vault: --check_vault_file 
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
-	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
+PHONY += --vault
+--vault: 11_decrypt --check_vault_file 
 
 --check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars_ovh.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'

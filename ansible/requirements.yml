@@ -26,7 +26,7 @@
   version: "2.7.0"
 
 - src: geerlingguy.php-versions
-  version: "3.1.0"
+  version: "3.1.3"
 
 - src: geerlingguy.php-mysql
   version: "2.0.2"
@@ -41,7 +41,7 @@
   version: "1.0.8"
 
 - src: geerlingguy.mysql
-  version: "2.9.4"
+  version: "2.9.5"
 
 - src: geerlingguy.postgresql
   version: "1.4.6"

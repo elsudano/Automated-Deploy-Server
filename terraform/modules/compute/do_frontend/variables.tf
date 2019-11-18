@@ -11,11 +11,11 @@ variable "do_tags_droplet" {
   type        = "list"
   description = "(Optional) List of TAGs for identify a droplet"
 }
-variable "do_public_key" {
+variable "public_key" {
   type        = "string"
   description = "(Optional) Containt the Public KEY access to remote instance"
 }
-variable "do_private_key" {
+variable "private_key" {
   type        = "string"
   description = "(Required) Path the file of Private KEY for accessing to instance"
 }
