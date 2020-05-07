@@ -1,0 +1,35 @@
+# Variables for the root yml configuration
+target: private
+# Docker Tasks
+name_user: usuario
+group_user: usuarios
+uid_user: 1010
+gid_user: 1010
+domain: "sudano.net"
+config_folder: /{{ name_user }}
+app_folder: "{{ config_folder }}/www"
+db_folder: "{{ config_folder }}/db"
+certs_folder: "/etc/letsencrypt/live/{{ domain }}/"
+data_folder: "{{ config_folder }}/ncData"
+
+ # Nextcloud Tasks
+url_download_nextcloud: "https://download.nextcloud.com/server/releases/nextcloud-18.0.3.zip"
+email: pepitogrillo148@hotmail.com
+
+# Webmin Role
+firewalld_enable: true
+install_utilities: true
+
+# Pip Role
+pip_package: python3-pip
+pip_install_packages: [ docker, docker-compose ]
+
+# Docker Role
+docker_users: [ root, usuario ]
+php_version: '7.3'
+
+# MySQL Database
+mysql_db_host: localhost
+mysql_db_name: ncdb
+mysql_db_user: ncuser
+# mysql_password: value in vault

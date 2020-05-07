@@ -1,6 +1,27 @@
 #!/bin/bash
 
+# Config for DigitalOcean provider
+export DIGITALOCEAN_TOKEN="TOKEN"
+
+# File of credentials for google provider of terraform
+export GOOGLE_CREDENTIALS="FILE.json"
+export CLOUDSDK_CORE_PROJECT="NAME"
+export CLOUDSDK_COMPUTE_REGION="us-central1"
+export CLOUDSDK_COMPUTE_ZONE="us-central1-c"
+
+# Config for OVH Provider
 export OVH_ENDPOINT=ovh-eu
 export OVH_APPLICATION_KEY=[application_key]
 export OVH_APPLICATION_SECRET=[application_secret]
 export OVH_CONSUMER_KEY=[consumer_key]
+
+# Custom provider VmWare Workstation
+export VMWS_USER="admin"
+export VMWS_PASSWORD="PASSWORD"
+export VMWS_URL="https://localhost:8697/api/#/"
+export VMWS_HTTPS=false
+export VMWS_DEBUG=true
+
+# Terraform log settings
+# export TF_LOG=TRACE # INFO, DEBUG, TRACE
+# export TF_LOG_PATH="terraform.txt"

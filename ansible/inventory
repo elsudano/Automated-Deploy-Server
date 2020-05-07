@@ -1,5 +1,14 @@
-[production]
-localhost ansible_host=web.server.net short_host=server
+[google]
+gcp.sudano.net ansible_host=0.0.0.0 short_host=server
 
-[test]
-localhost ansible_host=server-test short_host=test
+[aws]
+aws.sudano.net ansible_host=0.0.0.0 short_host=server
+
+[digital_ocean]
+do.sudano.net ansible_host=0.0.0.0 short_host=server
+
+[private]
+nc.sudano.net ansible_host=193.70.41.38 short_host=server
+
+#[test]
+#localhost ansible_host=127.0.0.1 short_host=test

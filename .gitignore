@@ -1,5 +1,4 @@
 ansible/vault/credentials.txt
-ansible/vault/env_vars_ovh.sh
 \ansible/roles
 fabric/fabfile.py
 \.terraform

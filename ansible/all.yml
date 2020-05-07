@@ -1,0 +1,92 @@
+- name: Apply base configuration for anyone cloud
+  hosts: 
+    - all
+
+  remote_user: root
+  become_user: root
+  become: true
+
+  pre_tasks:
+    - name: Including all vars to run all roles and tasks
+      include_vars: vars/{{ ansible_distribution }}.yml
+      tags: always
+
+    - name: Including encrypt vars
+      include_vars: vars/vault
+      tags: always
+
+  tasks:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      tags: always
+
+    - name: Disable IPv& for all interfaces
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
+        state: present
+        reload: yes
+      with_items:
+        - { key: net.ipv6.conf.all.disable_ipv6, value: 1 }
+        - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
+      tags: always
+
+    - name: Disable and stop the firewalld service
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+      tags: always
+      when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+
+    - name: Change a root password
+      user:
+        name: root
+        update_password: always
+        password: "{{ root_password | password_hash('sha512') }}"
+      tags: always
+
+    - name: Ensure group {{ group_user }} exists
+      group:
+        name: "{{ group_user }}"
+        gid: "{{ gid_user }}"
+        state: present
+      tags: always
+
+    - name: Clean all files of config and Data # Warning don't use in production
+      user:
+        name: "{{ name_user }}"
+        remove: yes
+        state: absent
+      tags: clean_all
+
+    - name: Create a user by default
+      user:
+        name: "{{ name_user }}"
+        uid: "{{ uid_user }}"
+        group: "{{ group_user }}"
+        password: "{{ user_password | password_hash('sha512') }}"
+        home: "{{ config_folder }}"
+        create_home: yes
+        comment: Usuario genérico
+        shell: /bin/bash
+        update_password: always
+      tags: always
+
+    - name: Set authorized key taken from file
+      authorized_key:
+        user: "{{ name_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}"
+      tags: always
+
+    - name: Allow {{ name_user }} to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers.d/{{ name_user }}
+        state: present
+        create: yes
+        line: "{{ name_user }} ALL=(ALL) NOPASSWD: ALL"
+        validate: 'visudo -cf %s'
+      tags: always

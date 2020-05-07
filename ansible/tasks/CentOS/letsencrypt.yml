@@ -1,0 +1,48 @@
+---
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python"
+  tags: always
+
+- name: Install plugin and bin of CertBot2
+  yum:
+    name: python2-certbot-dns-ovh.noarch
+    state: present
+  tags: [ 'letsencrypt' ]
+
+- name: Copy the OVH config file to instance
+  copy:
+    src: vault/ovh.ini
+    dest: "{{ config_folder }}/ovh.ini"
+    owner: root
+    mode: "0600"
+  register: output
+  tags: [ 'letsencrypt' ]
+
+- name: Check if certificate already exists.
+  stat:
+    path: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+  register: letsencrypt_cert
+  tags: [ 'letsencrypt' ]
+
+- name: Generate new certificate if one doesn't exist.
+  shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ certs_folder }}/ovh.ini --non-interactive --agree-tos --email pepitogrillo148@hotmail.com -d *.{{ domain }} -d {{ domain }}"
+  when: letsencrypt_cert.stat.exists == false
+  tags: [ 'letsencrypt' ]
+
+- name: Copy certificates at the correct path
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+    remote_src: yes
+    owner: root
+    mode: "0600"
+  with_items:
+    - { src: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem", dst: "/{{ name_user }}/keys/cert.crt" }
+    - { src: "/etc/letsencrypt/live/{{ domain }}/privkey.pem", dst: "/{{ name_user }}/keys/cert.key" }
+  tags: [ 'letsencrypt' ]
+
+- name: Debug the previous var output line 78
+  debug:
+    var: output
+  tags: debug

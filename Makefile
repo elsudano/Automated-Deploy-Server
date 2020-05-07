@@ -11,6 +11,7 @@ DEVDIR = $(BASE_TERRAFORM)/02-dev
 # This has to be solved, because when there is more than one it is a problem
 # PUBLIC_IP = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \")
 PUBLIC_IP = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \")
+INSTANCE = $(shell cat terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \")
 USER = $(shell cat $(VAULT_TERRAFORM)/terraform.tfvars | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \")
 OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
@@ -31,23 +32,29 @@ PHONY += prerequisites
 	@sudo mv /tmp/terraform /usr/bin/
 
 PHONY += bootstrap 
-02_bootstrap: --vault --requirements --dev_terraform_init ## Prepare environment for deploy automatically
+02_bootstrap: --check_vault_file --requirements --dev_terraform_init ## Prepare environment for deploy automatically
 
 PHONY += upload
-08_upload: 10_encrypt --upload 11_decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
+10_upload: 12_encrypt --upload 13_decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 PHONY += download
-09_download: --download 11_decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
+11_download: --download 13_decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
 
-10_encrypt: ## Encrypt files for uploading to repository
-	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
-	@ansible-vault encrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
+12_encrypt: ## Encrypt files for uploading to repository
+	# @ansible-vault encrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
+	# @ansible-vault encrypt $(VAULT_ANSIBLE)/*.json > /dev/null
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault encrypt ansible/vars/vault > /dev/null
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
-11_decrypt: ## Decrypt files for working with them
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/env_vars_ovh.sh > /dev/null
+13_decrypt: ## Decrypt files for working with them
+	# @ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
+	# @ansible-vault decrypt $(VAULT_ANSIBLE)/*.json > /dev/null
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault decrypt ansible/vars/vault > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
@@ -57,35 +64,42 @@ PHONY += download
 04_dev_deploy_run: --dev_terraform_init --check_vault_file ## Deploy new infrastructure for environment of develop
 	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform apply -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
 
-12_dev_remove: $(VAULT_TERRAFORM)/terraform.tfvars ## Un-Deploy all infrestructure the environment of develop
+14_dev_remove: $(VAULT_TERRAFORM)/terraform.tfvars ## Un-Deploy all infrestructure the environment of develop
 	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform destroy -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
 
-05_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration
-	@ansible-playbook ansible/root.yml --diff --check -u $(USER) -i $(PUBLIC_IP),
+05_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
+	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
+	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-06_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality
-	@ansible-playbook ansible/root.yml --diff -u $(USER) -i $(PUBLIC_IP),
+06_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
+	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 07_connect: $(PRIVATE_KEY) ## Connect to the remote instance with the key for deployment
 	@ssh -l $(USER) -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP)
 
-13_soft_clean: 10_encrypt ## Clean the project, this only remove all Roles and temporary files, use with careful
+08_poweron: ## Power on the instance
+	@gcloud compute instances start $(INSTANCE)
+
+09_poweroff: $(PRIVATE_KEY) ## Power off the instance
+	@ssh -l $(USER) -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP) sudo poweroff
+
+15_soft_clean: 12_encrypt ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
 	@rm -fR .terraform/
 	@rm -f /tmp/terraform*
 	@rm -fR ./*.backup
 
 PHONY += 14_hard_clean
-14_hard_clean: 13_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
+16_hard_clean: 13_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
 #    Private Functions                                  #
 #-------------------------------------------------------#
 --Fedora:
-	@sudo dnf install wget.x86_64 unzip.x86_64 python3-fabric.noarch ansible.noarch -y
+	@sudo dnf install -y wget.x86_64 unzip.x86_64 python3-fabric.noarch python3-dnf.noarch ansible.noarch
 --Ubuntu:
 	@sudo apt update -y
-	@sudo apt install wget unzip fabric ansible -y
+	@sudo apt install -y wget unzip fabric ansible
 --i386:
 	@wget -q -O /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TFVER}/terraform_${TFVER}_linux_386.zip
 --x86-64:
@@ -93,9 +107,6 @@ PHONY += 14_hard_clean
 
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
-
-PHONY += --vault
---vault: 11_decrypt --check_vault_file 
 
 --check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars_ovh.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'

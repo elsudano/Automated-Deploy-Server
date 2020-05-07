@@ -28,12 +28,13 @@ module "google_frontend" {
 #   source        = "../../modules/networking/do_net"
 #   do_droplet_id = "${module.do_frontend.first_droplet_id}"
 # }
-# module "ovh_domain" {
-#   source        = "../../modules/networking/ovh_domain"
-#   ovh_zone      = "${var.ovh_zone}"
-#   ovh_subdomain = "${var.ovh_subdomain}"
-#   ovh_target    = "${module.do_net.public_ip}"
-# }
+module "ovh_domain" {
+  source        = "../../modules/networking/ovh_domain"
+  ovh_zone      = "${var.ovh_zone}"
+  ovh_subdomain = "${var.ovh_subdomain}"
+  # ovh_target    = "${module.do_net.public_ip}"
+  ovh_target = "${module.google_frontend.google_frontend_endpoint}"
+}
 # resource "digitalocean_project" "project" {
 #   name        = "NextCloud"
 #   description = "Test for deployment personal server with all resources for work remotly"

@@ -1,0 +1,22 @@
+---
+- name: Apply base configuration for OVH Instance
+  hosts: 
+    - private
+  
+  remote_user: usuario
+  become_method: sudo
+  become_user: root
+  become: true
+
+  roles:
+    - { role: geerlingguy.repo-epel, become: yes, tags: [ 'epel' ], when: ansible_os_family == 'RedHat' }
+    - { role: geerlingguy.firewall, become: yes, tags: [ 'firewall' ] }
+    - { role: geerlingguy.pip, tags: [ 'pip', 'docker' ] }
+    - { role: geerlingguy.docker, tags: [ 'docker' ] }
+    - { role: semuadmin.webmin, tags: [ 'webmin' ] }
+
+  tasks:
+    - { name: Docker Configuration, include_tasks: "tasks/{{ ansible_distribution }}/docker.yml", tags: [ 'docker', 'clean_all' ] }
+    - { name: LetsEncrypt Configuration, include_tasks: "tasks/{{ ansible_distribution }}/letsencrypt.yml", tags: [ 'letsencrypt' ] }
+    - { name: Webmin Configuration, include_tasks: "tasks/{{ ansible_distribution }}/webmin.yml", tags: [ 'webmin' ] }
+    

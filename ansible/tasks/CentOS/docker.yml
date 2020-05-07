@@ -1,0 +1,94 @@
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tags: always
+
+- name: Delete all container
+  docker_container:
+    name: "{{ item }}"
+    keep_volumes: yes
+    state: absent
+  with_items:
+    - mariadb
+    - nextcloud
+  tags: [ 'docker', 'clean_all' ]
+
+- name: Clean all containers and related things
+  docker_prune:
+    containers: yes
+    images: yes
+    networks: yes
+    volumes: yes
+    builder_cache: yes
+  register: output
+  tags: [ 'docker', 'clean_all' ]
+
+- name: Debug the previous var output line 14
+  debug:
+    var: output
+  tags: debug
+
+- name: Create all containers of the Nextcloud application
+  docker_compose:
+    project_name: nextcloud
+    definition:
+      version: "2"
+      services:
+        nextcloud:
+          image: linuxserver/nextcloud
+          container_name: nextcloud
+          environment:
+            - PUID={{ uid_user }}
+            - PGID={{ gid_user }}
+            - TZ=Europe/London
+          volumes:
+            - "{{ config_folder }}:/config"
+            - "{{ data_folder }}:/data"
+          ports:
+            - 443:443
+          restart: unless-stopped
+
+        db:
+          image: linuxserver/mariadb
+          container_name: mariadb
+          environment:
+            - PUID={{ uid_user }}
+            - PGID={{ gid_user }}
+            - TZ=Europe/London
+            - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
+            - MYSQL_DATABASE={{ mysql_db_name }}
+            - MYSQL_USER={{ mysql_db_user }}
+            - MYSQL_PASSWORD={{ mysql_db_pass }}
+            #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+          volumes:
+            - "{{ db_folder }}:/config"
+          # ports:
+          #   - 3306:3306
+          restart: unless-stopped
+
+  register: output
+  tags: [ 'docker' ]
+
+- name: Debug the previous var output line 78
+  debug:
+    var: output
+  tags: debug
+
+# - name: Create a Docker network
+#   docker_network:
+#     name: nextcloud_network
+#     connected:
+#       - letsencrypt
+#       - mariadb
+#   register: output
+#   tags: always
+
+# - name: Debug the previous var output line 23
+#   debug:
+#     var: output
+#   tags: debug
+
+# - name: sleep for 20 seconds and continue with play
+#   wait_for:
+#     timeout: 20
+#   delegate_to: localhost
