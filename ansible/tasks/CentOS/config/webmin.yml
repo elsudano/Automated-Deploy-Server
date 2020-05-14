@@ -1,0 +1,39 @@
+- name: Gather the rpm package facts
+  package_facts:
+    manager: auto
+  register: output
+
+- name: If Webmin is installed
+  block:
+  - name: activate SSL and change path of the certificates files in miniserv.conf
+    lineinfile:
+      path: /etc/webmin/miniserv.conf
+      regexp: "{{ item.regex }}"
+      line: "{{ item.line }}"
+      state: present
+    with_items:
+      - { regex: '^keyfile=', line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
+      - { regex: '^certfile=', line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
+      - { regex: '^ssl=0', line: ssl=1 }
+
+  - name: activate SSL and change path of the certificates files in config
+    lineinfile:
+      path: /etc/webmin/config
+      line: "{{ item.line }}"
+      state: present
+    with_items:
+      - { line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
+      - { line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
+      - { line: ssl=1 }
+
+  when: "'webmin' in ansible_facts.packages"
+
+- name: Restart Webmin service
+  systemd:
+    name: webmin
+    state: restarted
+    enabled: yes
+
+- name: Apply configuration for Custom commands
+  debug:
+    msg: Se supone que tienes que realizar la configuración de webmin

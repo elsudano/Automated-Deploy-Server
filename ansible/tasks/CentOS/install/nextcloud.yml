@@ -1,0 +1,136 @@
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tags: always
+
+- name: Restart Docker service because some times the service it's blocked
+  service:
+    name: docker
+    state: restarted
+
+- name: Change config of {{ name_network }} network with custom IPAM config
+  docker_network:
+    name: "{{ name_network }}"
+    enable_ipv6: no
+    ipam_config:
+      - subnet: "{{ net_cidr }}"
+        gateway: "{{ gateway_ip }}"
+        iprange: "{{ subnet_range }}"
+
+- name: Create a database container MariaDB
+  docker_container:
+    name: mariadb
+    image: linuxserver/mariadb
+    recreate: yes
+    restart_policy: always
+    state: started
+    # healthcheck:
+    #   # Check if nginx server is he"althy by curl'ing the server.
+    #   # If this fails or timeouts, the healthcheck fails.
+    #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+    #   interval: 1m30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    env:
+      PUID: "{{uid_user}}"
+      PGID: "{{gid_user}}"
+      TZ: "Europe/London"
+      MYSQL_ROOT_PASSWORD: "{{mysql_root_pass}}"
+      MYSQL_DATABASE: "{{mysql_db_name}}"
+      MYSQL_USER: "{{mysql_db_user}}"
+      MYSQL_PASSWORD: "{{mysql_db_pass}}"
+      #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
+    volumes:
+      - "{{db_folder}}:/config"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{name_network}}"
+        ipv4_address: "{{mysql_db_host}}"
+        # links: 
+        #   - db_test:db
+    # ports:
+    #   - 3306:3306
+    
+
+- name: Create a application container Nextcloud
+  docker_container:
+    name: nextcloud
+    image: linuxserver/nextcloud
+    recreate: yes
+    restart_policy: always
+    state: started
+    # healthcheck:
+    #   # Check if nginx server is healthy by curl'ing the server.
+    #   # If this fails or timeouts, the healthcheck fails.
+    #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+    #   interval: 1m30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    env:
+      PUID: "{{ uid_user }}"
+      PGID: "{{ gid_user }}"
+      TZ: "Europe/London"
+    volumes:
+      - "{{ config_folder }}:/config"
+      - "{{ data_folder }}:/data"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ name_network }}"
+        ipv4_address: "{{ nextcloud_host }}"
+        # links: 
+        #   - db_test:db
+    ports:
+      - 443:443
+
+# - name: Create all containers of the Nextcloud application
+#   docker_compose:
+#     project_name: nextcloud
+#     definition:
+#       version: "2"
+#       services:
+#         nextcloud:
+#           image: linuxserver/nextcloud
+#           container_name: nextcloud
+#           environment:
+#             - PUID={{ uid_user }}
+#             - PGID={{ gid_user }}
+#             - TZ=Europe/London
+#           volumes:
+#             - "{{ config_folder }}:/config"
+#             - "{{ data_folder }}:/data"
+#           networks:
+#               default:
+#                   ipv4_address: "{{ nextcloud_host }}"
+#           ports:
+#             - 443:443
+#           restart: unless-stopped
+
+#         db:
+#           image: linuxserver/mariadb
+#           container_name: mariadb
+#           environment:
+#             - PUID={{ uid_user }}
+#             - PGID={{ gid_user }}
+#             - TZ=Europe/London
+#             - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
+#             - MYSQL_DATABASE={{ mysql_db_name }}
+#             - MYSQL_USER={{ mysql_db_user }}
+#             - MYSQL_PASSWORD={{ mysql_db_pass }}
+#             #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+#           volumes:
+#             - "{{ db_folder }}:/config"
+#           networks:
+#               default:
+#                   ipv4_address: "{{ mysql_db_host }}"
+#           # ports:
+#           #   - 3306:3306
+#           restart: unless-stopped
+#     networks:
+#       default:
+#         ipam:
+#           driver: default
+#           config:
+#           - subnet: "{{ subnet_range }}"
+#   register: output

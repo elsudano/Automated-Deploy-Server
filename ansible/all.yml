@@ -19,8 +19,12 @@
     - name: Disable SELinux
       selinux:
         state: disabled
-      tags: always
 
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+      
     - name: Disable IPv& for all interfaces
       sysctl:
         name: "{{ item.key }}"
@@ -31,36 +35,37 @@
       with_items:
         - { key: net.ipv6.conf.all.disable_ipv6, value: 1 }
         - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
-      tags: always
+
+    - name: Open requiered port in FirewallD
+      firewalld:
+        port: "{{ item.port }}"
+        permanent: yes
+        state: enabled
+      with_items:
+       - { port: 22/tcp }
+       - { port: 443/tcp }
+       - { port: 9090/tcp }
+       - { port: 10000/tcp }
 
     - name: Disable and stop the firewalld service
       service:
         name: firewalld
         state: stopped
         enabled: false
-      tags: always
       when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+      tags: [ 'debug' ]
 
     - name: Change a root password
       user:
         name: root
         update_password: always
         password: "{{ root_password | password_hash('sha512') }}"
-      tags: always
 
     - name: Ensure group {{ group_user }} exists
       group:
         name: "{{ group_user }}"
         gid: "{{ gid_user }}"
         state: present
-      tags: always
-
-    - name: Clean all files of config and Data # Warning don't use in production
-      user:
-        name: "{{ name_user }}"
-        remove: yes
-        state: absent
-      tags: clean_all
 
     - name: Create a user by default
       user:
@@ -73,14 +78,12 @@
         comment: Usuario genérico
         shell: /bin/bash
         update_password: always
-      tags: always
 
     - name: Set authorized key taken from file
       authorized_key:
         user: "{{ name_user }}"
         state: present
         key: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}"
-      tags: always
 
     - name: Allow {{ name_user }} to have passwordless sudo
       lineinfile:
@@ -89,4 +92,3 @@
         create: yes
         line: "{{ name_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: 'visudo -cf %s'
-      tags: always

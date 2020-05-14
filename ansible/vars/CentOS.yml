@@ -1,20 +1,20 @@
 # Variables for the root yml configuration
 target: private
+
 # Docker Tasks
 name_user: usuario
 group_user: usuarios
-uid_user: 1010
-gid_user: 1010
+uid_user: "1010"
+gid_user: "1010"
 domain: "sudano.net"
 config_folder: /{{ name_user }}
 app_folder: "{{ config_folder }}/www"
-db_folder: "{{ config_folder }}/db"
-certs_folder: "/etc/letsencrypt/live/{{ domain }}/"
-data_folder: "{{ config_folder }}/ncData"
+db_folder: "/ncBD"
+data_folder: /ncData
 
  # Nextcloud Tasks
-url_download_nextcloud: "https://download.nextcloud.com/server/releases/nextcloud-18.0.3.zip"
 email: pepitogrillo148@hotmail.com
+nextcloud_host: "172.11.0.2"
 
 # Webmin Role
 firewalld_enable: true
@@ -29,7 +29,13 @@ docker_users: [ root, usuario ]
 php_version: '7.3'
 
 # MySQL Database
-mysql_db_host: localhost
+mysql_db_host: "172.11.0.3"
 mysql_db_name: ncdb
 mysql_db_user: ncuser
 # mysql_password: value in vault
+
+# Network Config
+name_network: "nextcloud"
+net_cidr: 172.11.0.0/16
+gateway_ip: 172.11.0.1
+subnet_range: 172.11.0.0/28

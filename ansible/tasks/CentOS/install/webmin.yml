@@ -1,0 +1,40 @@
+- name: Started Firewalld to the instalation of Webmin
+  service:
+    name: firewalld
+    state: started
+
+- name: Add webmin rpm-key
+  rpm_key:
+    key: http://www.webmin.com/jcameron-key.asc
+    state: present
+
+- name: Add webmin yum repository
+  yum_repository:
+    baseurl: 'https://download.webmin.com/download/yum'
+    state: present
+    name: webmin
+    description: Webmin Yum Repo
+
+- name: Install Webmin dependencies
+  yum:
+    name: ['perl', 'perl-Authen-PAM', 'perl-Net-SSLeay', 'openssl', 'perl-IO-Tty', 'perl-Encode-Detect']
+    state: present
+
+- name: Install Webmin in VPS instance
+  yum:
+    name: webmin
+    state: present
+
+- name: Just force systemd to reread configs
+  systemd:
+    daemon_reload: yes
+
+- name: Stop and disable a old Webmin service
+  shell: "service webmin stop"
+
+- name: Start and enable a new Webmin service
+  systemd:
+    name: webmin
+    state: started
+    daemon_reload: yes
+    enabled: yes

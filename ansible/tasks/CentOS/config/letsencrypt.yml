@@ -1,0 +1,27 @@
+---
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python"
+  tags: always
+
+- name: Install plugin and bin of CertBot2
+  yum:
+    name: python2-certbot-dns-ovh.noarch
+    state: present
+
+- name: Copy the OVH config file to instance
+  copy:
+    src: vault/ovh.ini
+    dest: "{{ config_folder }}/ovh.ini"
+    owner: root
+    mode: "0600"
+  register: output
+
+- name: Check if certificate already exists.
+  stat:
+    path: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+  register: letsencrypt_cert
+
+- name: Generate new certificate if one doesn't exist.
+  shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ email }} -d *.{{ domain }} -d {{ domain }}"
+  when: letsencrypt_cert.stat.exists == false
