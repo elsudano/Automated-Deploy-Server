@@ -5,7 +5,7 @@
 
 - name: Check if certificate already exists in source folder.
   stat:
-    path: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+    path: /etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem
   register: letsencrypt_cert_src
 
 - name: Copy certificates at the correct path
@@ -16,38 +16,18 @@
     owner: root
     mode: "0600"
   with_items:
-    - { src: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem", dst: "{{ config_folder }}/keys/cert.crt" }
-    - { src: "/etc/letsencrypt/live/{{ domain }}/privkey.pem", dst: "{{ config_folder }}/keys/cert.key" }
+    - { src: "/etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem", dst: "{{ dk_config_folder }}/keys/cert.crt" }
+    - { src: "/etc/letsencrypt/live/{{ dk_domain }}/privkey.pem", dst: "{{ dk_config_folder }}/keys/cert.key" }
   when: [ letsencrypt_cert_src.stat.exists == true ]
-
-# - name: Get info on container
-#   docker_container_info:
-#     name: mariadb
-#   register: container_info
-
-# - name: Try to looking which is the IP of MariaDB container
-#   set_fact:
-#     mysql_db_host: "{{ container_info.container.NetworkSettings.Networks.nextcloud_default.IPAddress }}"
-
-# - name: Debug the previous var output line 42
-#   debug:
-#     var: mysql_db_host
-#   tags: [ 'debug' ]
 
 - name: Copy config nextcloud at the correct path
   template:
     src: autoconfig.php.j2
-    dest: "{{ config_folder }}/www/nextcloud/config/autoconfig.php"
-    owner: "{{ name_user }}"
-    group: "{{ group_user }}"
+    dest: "{{ dk_config_folder }}/www/nextcloud/config/autoconfig.php"
+    owner: "{{ dk_name_user }}"
+    group: "{{ dk_group_user }}"
     force: yes
     mode: "0660"
-
-# - name: Remove file CAN_INSTALL of folder config to nextcloud
-#   file:
-#     path: "{{ config_folder }}/www/nextcloud/config/CAN_INSTALL"
-#     state: absent
-#   tags: [ 'never', 'nextcloud' ]
 
 - name: Restart container Nextcloud
   docker_container:

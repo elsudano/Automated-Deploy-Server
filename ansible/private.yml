@@ -23,8 +23,9 @@
 
   tasks:
     - { name: Playbook to clean VPS instance, include_tasks: "tasks/{{ ansible_distribution }}/clean.yml", tags: [ 'never', 'clean', 'clean_my_data' ] }
+    - { name: Production Settings, include_tasks: "tasks/{{ ansible_distribution }}/production.yml", tags: [ 'never', 'production' ] }
     - { name: Webmin Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/webmin.yml", tags: [ 'webmin' ] }
-    - { name: Webmin Setting, include_tasks: "tasks/{{ ansible_distribution }}/config/webmin.yml", tags: [ 'webmin' ] }
+    - { name: Webmin Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/webmin.yml", tags: [ 'webmin' ] }
     - { name: Nextcloud Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/nextcloud.yml", tags: [ 'nextcloud' ] }
-    - { name: Nextcloud Setting, include_tasks: "tasks/{{ ansible_distribution }}/config/nextcloud.yml", tags: [ 'nextcloud' ] }
-    - { name: LetsEncrypt Setting, include_tasks: "tasks/{{ ansible_distribution }}/config/letsencrypt.yml", tags: [ 'letsencrypt' ] }
+    - { name: Nextcloud Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/nextcloud.yml", tags: [ 'nextcloud' ] }
+    - { name: LetsEncrypt Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/letsencrypt.yml", tags: [ 'letsencrypt' ] }

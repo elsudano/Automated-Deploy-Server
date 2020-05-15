@@ -8,14 +8,14 @@
     name: docker
     state: restarted
 
-- name: Change config of {{ name_network }} network with custom IPAM config
+- name: Change config of {{ net_name_network }} network with custom IPAM config
   docker_network:
-    name: "{{ name_network }}"
+    name: "{{ net_name_network }}"
     enable_ipv6: no
     ipam_config:
       - subnet: "{{ net_cidr }}"
-        gateway: "{{ gateway_ip }}"
-        iprange: "{{ subnet_range }}"
+        gateway: "{{ net_gateway_ip }}"
+        iprange: "{{ net_subnet_range }}"
 
 - name: Create a database container MariaDB
   docker_container:
@@ -33,8 +33,8 @@
     #   retries: 3
     #   start_period: 30s
     env:
-      PUID: "{{uid_user}}"
-      PGID: "{{gid_user}}"
+      PUID: "{{dk_uid_user}}"
+      PGID: "{{dk_gid_user}}"
       TZ: "Europe/London"
       MYSQL_ROOT_PASSWORD: "{{mysql_root_pass}}"
       MYSQL_DATABASE: "{{mysql_db_name}}"
@@ -42,10 +42,10 @@
       MYSQL_PASSWORD: "{{mysql_db_pass}}"
       #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
     volumes:
-      - "{{db_folder}}:/config"
+      - "{{dk_db_folder}}:/config"
     networks_cli_compatible: yes
     networks:
-      - name: "{{name_network}}"
+      - name: "{{net_name_network}}"
         ipv4_address: "{{mysql_db_host}}"
         # links: 
         #   - db_test:db
@@ -69,16 +69,16 @@
     #   retries: 3
     #   start_period: 30s
     env:
-      PUID: "{{ uid_user }}"
-      PGID: "{{ gid_user }}"
+      PUID: "{{ dk_uid_user }}"
+      PGID: "{{ dk_gid_user }}"
       TZ: "Europe/London"
     volumes:
-      - "{{ config_folder }}:/config"
-      - "{{ data_folder }}:/data"
+      - "{{ dk_config_folder }}:/config"
+      - "{{ dk_data_folder }}:/data"
     networks_cli_compatible: yes
     networks:
-      - name: "{{ name_network }}"
-        ipv4_address: "{{ nextcloud_host }}"
+      - name: "{{ net_name_network }}"
+        ipv4_address: "{{ nc_nextcloud_host }}"
         # links: 
         #   - db_test:db
     ports:
@@ -94,15 +94,15 @@
 #           image: linuxserver/nextcloud
 #           container_name: nextcloud
 #           environment:
-#             - PUID={{ uid_user }}
-#             - PGID={{ gid_user }}
+#             - PUID={{ dk_uid_user }}
+#             - PGID={{ dk_gid_user }}
 #             - TZ=Europe/London
 #           volumes:
-#             - "{{ config_folder }}:/config"
-#             - "{{ data_folder }}:/data"
+#             - "{{ dk_config_folder }}:/config"
+#             - "{{ dk_data_folder }}:/data"
 #           networks:
 #               default:
-#                   ipv4_address: "{{ nextcloud_host }}"
+#                   ipv4_address: "{{ nc_nextcloud_host }}"
 #           ports:
 #             - 443:443
 #           restart: unless-stopped
@@ -111,8 +111,8 @@
 #           image: linuxserver/mariadb
 #           container_name: mariadb
 #           environment:
-#             - PUID={{ uid_user }}
-#             - PGID={{ gid_user }}
+#             - PUID={{ dk_uid_user }}
+#             - PGID={{ dk_gid_user }}
 #             - TZ=Europe/London
 #             - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
 #             - MYSQL_DATABASE={{ mysql_db_name }}
@@ -120,7 +120,7 @@
 #             - MYSQL_PASSWORD={{ mysql_db_pass }}
 #             #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
 #           volumes:
-#             - "{{ db_folder }}:/config"
+#             - "{{ dk_db_folder }}:/config"
 #           networks:
 #               default:
 #                   ipv4_address: "{{ mysql_db_host }}"
@@ -132,5 +132,5 @@
 #         ipam:
 #           driver: default
 #           config:
-#           - subnet: "{{ subnet_range }}"
+#           - subnet: "{{ net_subnet_range }}"
 #   register: output

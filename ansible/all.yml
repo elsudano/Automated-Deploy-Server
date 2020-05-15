@@ -53,7 +53,7 @@
         state: stopped
         enabled: false
       when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
-      tags: [ 'debug' ]
+      tags: [ 'never', 'debug' ]
 
     - name: Change a root password
       user:
@@ -61,19 +61,19 @@
         update_password: always
         password: "{{ root_password | password_hash('sha512') }}"
 
-    - name: Ensure group {{ group_user }} exists
+    - name: Ensure group {{ dk_group_user }} exists
       group:
-        name: "{{ group_user }}"
-        gid: "{{ gid_user }}"
+        name: "{{ dk_group_user }}"
+        gid: "{{ dk_gid_user }}"
         state: present
 
     - name: Create a user by default
       user:
-        name: "{{ name_user }}"
-        uid: "{{ uid_user }}"
-        group: "{{ group_user }}"
+        name: "{{ dk_name_user }}"
+        uid: "{{ dk_uid_user }}"
+        group: "{{ dk_group_user }}"
         password: "{{ user_password | password_hash('sha512') }}"
-        home: "{{ config_folder }}"
+        home: "{{ dk_config_folder }}"
         create_home: yes
         comment: Usuario genérico
         shell: /bin/bash
@@ -81,14 +81,14 @@
 
     - name: Set authorized key taken from file
       authorized_key:
-        user: "{{ name_user }}"
+        user: "{{ dk_name_user }}"
         state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}"
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
-    - name: Allow {{ name_user }} to have passwordless sudo
+    - name: Allow {{ dk_name_user }} to have passwordless sudo
       lineinfile:
-        dest: /etc/sudoers.d/{{ name_user }}
+        dest: /etc/sudoers.d/{{ dk_name_user }}
         state: present
         create: yes
-        line: "{{ name_user }} ALL=(ALL) NOPASSWD: ALL"
+        line: "{{ dk_name_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: 'visudo -cf %s'

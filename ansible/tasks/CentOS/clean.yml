@@ -1,6 +1,6 @@
 - name: Clean all files of application # Warning don't use in production
   user:
-    name: "{{ name_user }}"
+    name: "{{ dk_name_user }}"
     remove: yes
     force: yes
     state: absent
@@ -8,13 +8,13 @@
 
 - name: Remove all data of NextCloud # Warning don't use in production
   file:
-    path: "{{ data_folder }}"
+    path: "{{ dk_data_folder }}"
     state: absent
   tags: [ 'clean_my_data' ]
 
 - name: Remove all data of DB folder # Warning don't use in production
   file:
-    path: "{{ db_folder }}"
+    path: "{{ dk_db_folder }}"
     state: absent
   tags: [ 'clean_my_data' ]
 

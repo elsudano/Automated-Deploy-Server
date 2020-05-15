@@ -30,7 +30,10 @@
     daemon_reload: yes
 
 - name: Stop and disable a old Webmin service
-  shell: "service webmin stop"
+  service:
+    name: webmin
+    state: stopped
+  # shell: "service webmin stop"
 
 - name: Start and enable a new Webmin service
   systemd:

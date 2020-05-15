@@ -1,0 +1,27 @@
+- name: Enable and start the firewalld service
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+  tags: [ 'production' ]
+
+- name: Remove file of configuration Nextcloud
+  file:
+    path: "{{ dk_config_folder }}/www/nextcloud/config/autoconfig.php"
+    state: absent
+  tags: [ 'production' ]
+
+- name: Set authorized key taken from file
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  tags: [ 'production' ]
+
+- name: Unset authorized key taken from file
+  authorized_key:
+    user: root
+    state: absent
+    key: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}"
+  tags: [ 'production' ]
