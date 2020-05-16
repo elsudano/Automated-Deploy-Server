@@ -7,6 +7,7 @@ dk_group_user: usuarios
 dk_uid_user: "1010"
 dk_gid_user: "1010"
 dk_domain: "sudano.net"
+dk_nc_subdomain: "nc.{{ dk_domain }}"
 dk_config_folder: /{{ dk_name_user }}
 dk_app_folder: "{{ dk_config_folder }}/www"
 dk_db_folder: "/ncBD"
@@ -22,7 +23,7 @@ nc_nextcloud_host: "172.11.0.2"
 mysql_db_host: "172.11.0.3"
 mysql_db_name: ncdb
 mysql_db_user: ncuser
-# mysql_password: value in vault
+# mysql_db_pass: value in vault
 
 # Network Config
 net_name_network: "nextcloud"
@@ -37,3 +38,21 @@ pip_install_packages: [ docker, docker-compose ]
 # Docker Role
 docker_users: [ root, usuario ]
 php_version: '7.3'
+
+# Firewall Role
+firewall_state: started
+firewall_enabled_at_boot: true
+firewall_flush_rules_and_chains: false
+firewall_disable_firewalld: false
+firewall_enable_ipv6: false
+firewall_allowed_tcp_ports:
+  - "22"
+  - "443"
+  - "9090"
+  - "10000"
+firewall_forwarded_tcp_ports:
+  - { src: "22", dest: "22" }
+  - { src: "443", dest: "443" }
+  - { src: "9090", dest: "9090" }
+  - { src: "10000", dest: "10000" }
+firewall_additional_rules: []

@@ -1,0 +1,55 @@
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tags: always
+
+- name: Delete database of Nextcloud
+  mysql_db:
+    login_host: "{{ mysql_db_host }}"
+    login_user: "{{ mysql_db_user }}"
+    login_password: "{{ mysql_db_pass }}"
+    name: "{{ mysql_db_name }}"
+    state: absent
+  tags: [ 'by_default' ]
+
+- name: Analyzing the Nextcloud directories to delete...
+  find:
+    paths: [ "{{ dk_data_folder }}" ]
+    patterns: [ "appdata_*", "files_*", "{{ nc_admin_user }}" ]
+    use_regex: true
+    file_type: directory
+  register: folders_to_delete
+  tags: [ 'by_default' ]
+
+- name: Deleting the Nextcloud directories...
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ folders_to_delete.files }}"
+  tags: [ 'by_default' ]
+
+- name: Change config of Nextcloud at not installed
+  lineinfile:
+    dest: "{{ dk_app_folder }}/nextcloud/config/config.php"
+    regexp: "'installed' => true,"
+    line: "'installed' => false,"
+  tags: [ 'by_default' ]
+
+- name: Create a one file of control CAN_INSTALL
+  file:
+    path: "{{ dk_app_folder }}/nextcloud/config/CAN_INSTALL"
+    owner: "{{ dk_name_user }}"
+    group: "{{ dk_group_user }}"
+    mode: "0640"
+    state: touch
+  tags: [ 'by_default' ]
+
+- name: Copy config nextcloud at the correct path
+  template:
+    src: autoconfig.php.j2
+    dest: "{{ dk_config_folder }}/www/nextcloud/config/autoconfig.php"
+    owner: "{{ dk_name_user }}"
+    group: "{{ dk_group_user }}"
+    force: yes
+    mode: "0660"
+  tags: [ 'by_default' ]

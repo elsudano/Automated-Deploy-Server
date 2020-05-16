@@ -25,19 +25,18 @@
     name: webmin
     state: present
 
-- name: Just force systemd to reread configs
-  systemd:
-    daemon_reload: yes
-
 - name: Stop and disable a old Webmin service
-  service:
-    name: webmin
-    state: stopped
-  # shell: "service webmin stop"
+#   service: # when I use the module service, webmin service don't be stop
+#     name: webmin
+#     state: restarted
+#     enabled: no
+#     force: yes
+#     daemon_reload: yes
+  shell: "service webmin stop"
 
 - name: Start and enable a new Webmin service
   systemd:
     name: webmin
-    state: started
+    state: restarted
     daemon_reload: yes
     enabled: yes

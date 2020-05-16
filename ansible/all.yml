@@ -24,7 +24,12 @@
       yum:
         name: '*'
         state: latest
-      
+
+    - name: Install dependencies for all playbooks
+      yum:
+        name: ['python36-PyMySQL']
+        state: present
+
     - name: Disable IPv& for all interfaces
       sysctl:
         name: "{{ item.key }}"
@@ -36,16 +41,16 @@
         - { key: net.ipv6.conf.all.disable_ipv6, value: 1 }
         - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
 
-    - name: Open requiered port in FirewallD
-      firewalld:
-        port: "{{ item.port }}"
-        permanent: yes
-        state: enabled
-      with_items:
-       - { port: 22/tcp }
-       - { port: 443/tcp }
-       - { port: 9090/tcp }
-       - { port: 10000/tcp }
+    # - name: Open requiered port in FirewallD
+    #   firewalld:
+    #     port: "{{ item.port }}"
+    #     permanent: yes
+    #     state: enabled
+    #   with_items:
+    #    - { port: 22/tcp }
+    #    - { port: 443/tcp }
+    #    - { port: 9090/tcp }
+    #    - { port: 10000/tcp }
 
     - name: Disable and stop the firewalld service
       service:

@@ -33,20 +33,20 @@
     #   retries: 3
     #   start_period: 30s
     env:
-      PUID: "{{dk_uid_user}}"
-      PGID: "{{dk_gid_user}}"
+      PUID: "{{ dk_uid_user }}"
+      PGID: "{{ dk_gid_user }}"
       TZ: "Europe/London"
-      MYSQL_ROOT_PASSWORD: "{{mysql_root_pass}}"
-      MYSQL_DATABASE: "{{mysql_db_name}}"
-      MYSQL_USER: "{{mysql_db_user}}"
-      MYSQL_PASSWORD: "{{mysql_db_pass}}"
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
+      MYSQL_DATABASE: "{{ mysql_db_name }}"
+      MYSQL_USER: "{{ mysql_db_user }}"
+      MYSQL_PASSWORD: "{{ mysql_db_pass }}"
       #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
     volumes:
-      - "{{dk_db_folder}}:/config"
+      - "{{ dk_db_folder }}:/config"
     networks_cli_compatible: yes
     networks:
-      - name: "{{net_name_network}}"
-        ipv4_address: "{{mysql_db_host}}"
+      - name: "{{ net_name_network }}"
+        ipv4_address: "{{ mysql_db_host }}"
         # links: 
         #   - db_test:db
     # ports:
