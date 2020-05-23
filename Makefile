@@ -35,7 +35,7 @@ PHONY += bootstrap
 02_bootstrap: --check_vault_file --requirements --dev_terraform_init ## Prepare environment for deploy automatically
 
 PHONY += upload
-10_upload: 12_encrypt --upload 13_decrypt ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
+10_upload: 12_encrypt --upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 PHONY += download
 11_download: --download 13_decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
@@ -58,14 +58,15 @@ PHONY += download
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
-03_dev_deploy_check: --dev_terraform_init --check_vault_file ## Check the modify of deploy the new infrastructure for environment of develop
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform plan -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+PHONY += dev_deploy_check
+03_dev_deploy_check: 13_decrypt --deploy_check 12_encrypt ## Check the modify of deploy the new infrastructure for environment of develop 
 
-04_dev_deploy_run: --dev_terraform_init --check_vault_file ## Deploy new infrastructure for environment of develop
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform apply -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+PHONY += dev_deploy_run
+04_dev_deploy_run: 13_decrypt --deploy_run 12_encrypt ## Deploy new infrastructure for environment of develop
 
-14_dev_remove: $(VAULT_TERRAFORM)/terraform.tfvars ## Un-Deploy all infrestructure the environment of develop
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform destroy -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+PHONY += dev_remove
+14_dev_remove: 13_decrypt --dev_remove 12_encrypt  ## Un-Deploy all infrestructure the environment of develop
+
 
 05_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
@@ -74,8 +75,8 @@ PHONY += download
 06_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-07_connect: $(PRIVATE_KEY) ## Connect to the remote instance with the key for deployment
-	@ssh -l $(USER) -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP)
+PHONY += connect
+07_connect: 13_decrypt --connect 12_encrypt ## Connect to the remote instance with the key for deployment
 
 08_poweron: ## Power on the instance
 	@gcloud compute instances start $(INSTANCE)
@@ -89,7 +90,7 @@ PHONY += download
 	@rm -f /tmp/terraform*
 	@rm -fR ./*.backup
 
-PHONY += 14_hard_clean
+PHONY += hard_clean
 16_hard_clean: 13_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
@@ -107,6 +108,18 @@ PHONY += 14_hard_clean
 
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
+
+--deploy_check: --dev_terraform_init --check_vault_file 
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform plan -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+
+--deploy_run: --dev_terraform_init --check_vault_file 
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform apply -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+
+--dev_remove: $(VAULT_TERRAFORM)/terraform.tfvars
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform destroy -var-file="$(VAULT_TERRAFORM)/terraform.tfvars" $(DEVDIR)
+
+--connect: $(PRIVATE_KEY)
+	@ssh -l $(USER) -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(PUBLIC_IP)
 
 --check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars_ovh.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'

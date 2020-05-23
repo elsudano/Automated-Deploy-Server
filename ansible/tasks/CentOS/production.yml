@@ -12,9 +12,16 @@
     state: absent
   tags: [ 'production' ]
 
-- name: Set authorized key taken from file
+- name: Set authorized key taken from file for root
   authorized_key:
     user: root
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  tags: [ 'production' ]
+
+- name: Set authorized key taken from file for "{{ dk_name_user }}"
+  authorized_key:
+    user: "{{ dk_name_user }}"
     state: present
     key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   tags: [ 'production' ]

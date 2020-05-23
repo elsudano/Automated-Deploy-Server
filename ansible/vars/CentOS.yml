@@ -17,19 +17,19 @@ dk_data_folder: /ncData
 nc_email: pepitogrillo148@hotmail.com
 nc_admin_user: admin
 # nc_admin_pass: value in vault
-nc_nextcloud_host: "172.11.0.2"
+nc_nextcloud_host: "172.0.11.2"
 
 # MySQL Database
-mysql_db_host: "172.11.0.3"
+mysql_db_host: "172.0.11.3"
 mysql_db_name: ncdb
 mysql_db_user: ncuser
 # mysql_db_pass: value in vault
 
 # Network Config
 net_name_network: "nextcloud"
-net_cidr: 172.11.0.0/16
-net_gateway_ip: 172.11.0.1
-net_subnet_range: 172.11.0.0/28
+net_cidr: 172.0.11.0/16
+net_gateway_ip: 172.0.11.1
+net_subnet_range: 172.0.11.0/28
 
 # Pip Role
 pip_package: python3-pip
@@ -42,7 +42,7 @@ php_version: '7.3'
 # Firewall Role
 firewall_state: started
 firewall_enabled_at_boot: true
-firewall_flush_rules_and_chains: false
+firewall_flush_rules_and_chains: true
 firewall_disable_firewalld: false
 firewall_enable_ipv6: false
 firewall_allowed_tcp_ports:

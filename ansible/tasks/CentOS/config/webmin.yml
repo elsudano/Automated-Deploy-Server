@@ -1,3 +1,7 @@
+- name: Setting the correct interpreter of python 
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python"
+
 - name: Gather the rpm package facts
   package_facts:
     manager: auto

@@ -2,7 +2,8 @@
   hosts: 
     - all
 
-  remote_user: root
+  remote_user: centos # Change this user according to instance we want deploy
+  become_method: sudo
   become_user: root
   become: true
 
@@ -27,7 +28,7 @@
 
     - name: Install dependencies for all playbooks
       yum:
-        name: ['python36-PyMySQL']
+        name: ['python2-pip.noarch', 'python36-PyMySQL', 'mariadb', 'mariadb-server', 'mariadb-devel']
         state: present
 
     - name: Disable IPv& for all interfaces
@@ -41,16 +42,16 @@
         - { key: net.ipv6.conf.all.disable_ipv6, value: 1 }
         - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
 
-    # - name: Open requiered port in FirewallD
-    #   firewalld:
-    #     port: "{{ item.port }}"
-    #     permanent: yes
-    #     state: enabled
-    #   with_items:
-    #    - { port: 22/tcp }
-    #    - { port: 443/tcp }
-    #    - { port: 9090/tcp }
-    #    - { port: 10000/tcp }
+    - name: Open requiered port in FirewallD
+      firewalld:
+        port: "{{ item.port }}"
+        permanent: yes
+        state: enabled
+      with_items:
+       - { port: 22/tcp }
+       - { port: 443/tcp }
+       - { port: 9090/tcp }
+       - { port: 10000/tcp }
 
     - name: Disable and stop the firewalld service
       service:
@@ -89,6 +90,7 @@
         user: "{{ dk_name_user }}"
         state: present
         key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      when: not ansible_check_mode
 
     - name: Allow {{ dk_name_user }} to have passwordless sudo
       lineinfile:

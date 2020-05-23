@@ -1,5 +1,5 @@
 [google]
-gcp.sudano.net ansible_host=0.0.0.0 short_host=server
+mync.sudano.net ansible_host=mync.sudano.net short_host=server
 
 [aws]
 aws.sudano.net ansible_host=0.0.0.0 short_host=server
@@ -10,5 +10,5 @@ do.sudano.net ansible_host=0.0.0.0 short_host=server
 [private]
 nc.sudano.net ansible_host=193.70.41.38 short_host=server
 
-#[test]
-#localhost ansible_host=127.0.0.1 short_host=test
+[test]
+my.local.server ansible_host=0.0.0.0/0 short_host=test

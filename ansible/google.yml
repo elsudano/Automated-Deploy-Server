@@ -1,9 +1,8 @@
----
-- name: Apply base configuration for OVH Instance
+- name: Apply base configuration for Google instance
   hosts: 
-    - private
+    - google
   
-  remote_user: root
+  remote_user: centos
   become_method: sudo
   become_user: root
   become: true

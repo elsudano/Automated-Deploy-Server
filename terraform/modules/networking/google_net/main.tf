@@ -11,8 +11,7 @@ resource "google_compute_firewall" "fpc_firewall" {
 
   allow {
     protocol = "tcp"
-    # ports    = ["22"]
-    ports    = ["22","80","443","3306"]
+    ports    = ["22","80","443","3306", "10000"]
   }
 
   source_ranges = ["0.0.0.0/0"]
