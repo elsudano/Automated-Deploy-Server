@@ -1,136 +1,140 @@
-- name: Setting the correct interpreter of python 
-  set_fact:
-    ansible_python_interpreter: "/usr/bin/python3"
-  tags: always
+- name: Tasks for install NextCloud
+  tags: [ 'nextcloud' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
 
-- name: Restart Docker service because some times the service it's blocked
-  service:
-    name: docker
-    state: restarted
+    - name: Restart Docker service because some times the service it's blocked
+      service:
+        name: docker
+        state: restarted
 
-- name: Change config of {{ net_name_network }} network with custom IPAM config
-  docker_network:
-    name: "{{ net_name_network }}"
-    enable_ipv6: no
-    ipam_config:
-      - subnet: "{{ net_cidr }}"
-        gateway: "{{ net_gateway_ip }}"
-        iprange: "{{ net_subnet_range }}"
+    - name: Change config of {{ net_name_network }} network with custom IPAM config
+      docker_network:
+        name: "{{ net_name_network }}"
+        enable_ipv6: no
+        ipam_config:
+          - subnet: "{{ net_cidr }}"
+            gateway: "{{ net_gateway_ip }}"
+            iprange: "{{ net_subnet_range }}"
 
-- name: Create a database container MariaDB
-  docker_container:
-    name: mariadb
-    image: linuxserver/mariadb
-    recreate: yes
-    restart_policy: always
-    state: started
-    # healthcheck:
-    #   # Check if nginx server is he"althy by curl'ing the server.
-    #   # If this fails or timeouts, the healthcheck fails.
-    #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
-    #   interval: 1m30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s
-    env:
-      PUID: "{{ dk_uid_user }}"
-      PGID: "{{ dk_gid_user }}"
-      TZ: "Europe/London"
-      MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
-      MYSQL_DATABASE: "{{ mysql_db_name }}"
-      MYSQL_USER: "{{ mysql_db_user }}"
-      MYSQL_PASSWORD: "{{ mysql_db_pass }}"
-      #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
-    volumes:
-      - "{{ dk_db_folder }}:/config"
-    networks_cli_compatible: yes
-    networks:
-      - name: "{{ net_name_network }}"
-        ipv4_address: "{{ mysql_db_host }}"
-        # links: 
-        #   - db_test:db
-    # ports:
-    #   - 3306:3306
-    
+    - name: Create a database container MariaDB
+      docker_container:
+        name: "{{ mysql_container_name }}"
+        image: linuxserver/mariadb
+        recreate: yes
+        restart_policy: always
+        state: started
+        # healthcheck:
+        #   # Check if nginx server is he"althy by curl'ing the server.
+        #   # If this fails or timeouts, the healthcheck fails.
+        #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+        #   interval: 1m30s
+        #   timeout: 10s
+        #   retries: 3
+        #   start_period: 30s
+        env:
+          PUID: "{{ dk_uid_user }}"
+          PGID: "{{ dk_gid_user }}"
+          TZ: "Europe/London"
+          MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
+          MYSQL_DATABASE: "{{ mysql_db_name }}"
+          MYSQL_USER: "{{ mysql_db_user }}"
+          MYSQL_PASSWORD: "{{ mysql_db_pass }}"
+          #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
+        volumes:
+          - "{{ dk_db_folder }}:/config"
+        networks_cli_compatible: yes
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ mysql_db_host }}"
+            # links: 
+            #   - db_test:db
+        # ports:
+        #   - 3306:3306
+      when: not ansible_check_mode        
 
-- name: Create a application container Nextcloud
-  docker_container:
-    name: nextcloud
-    image: linuxserver/nextcloud
-    recreate: yes
-    restart_policy: always
-    state: started
-    # healthcheck:
-    #   # Check if nginx server is healthy by curl'ing the server.
-    #   # If this fails or timeouts, the healthcheck fails.
-    #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
-    #   interval: 1m30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s
-    env:
-      PUID: "{{ dk_uid_user }}"
-      PGID: "{{ dk_gid_user }}"
-      TZ: "Europe/London"
-    volumes:
-      - "{{ dk_config_folder }}:/config"
-      - "{{ dk_data_folder }}:/data"
-    networks_cli_compatible: yes
-    networks:
-      - name: "{{ net_name_network }}"
-        ipv4_address: "{{ nc_nextcloud_host }}"
-        # links: 
-        #   - db_test:db
-    ports:
-      - 443:443
+    - name: Create a application container Nextcloud
+      docker_container:
+        name: "{{ nc_container_name }}"
+        image: linuxserver/nextcloud
+        recreate: yes
+        restart_policy: always
+        state: started
+        # healthcheck:
+        #   # Check if nginx server is healthy by curl'ing the server.
+        #   # If this fails or timeouts, the healthcheck fails.
+        #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+        #   interval: 1m30s
+        #   timeout: 10s
+        #   retries: 3
+        #   start_period: 30s
+        env:
+          PUID: "{{ dk_uid_user }}"
+          PGID: "{{ dk_gid_user }}"
+          TZ: "Europe/London"
+        volumes:
+          - "{{ dk_config_folder }}:/config"
+          - "{{ dk_data_folder }}:/data"
+        networks_cli_compatible: yes
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ nc_nextcloud_host }}"
+            # links: 
+            #   - db_test:db
+        ports:
+          - 443:443
+      when: not ansible_check_mode
 
-# - name: Create all containers of the Nextcloud application
-#   docker_compose:
-#     project_name: nextcloud
-#     definition:
-#       version: "2"
-#       services:
-#         nextcloud:
-#           image: linuxserver/nextcloud
-#           container_name: nextcloud
-#           environment:
-#             - PUID={{ dk_uid_user }}
-#             - PGID={{ dk_gid_user }}
-#             - TZ=Europe/London
-#           volumes:
-#             - "{{ dk_config_folder }}:/config"
-#             - "{{ dk_data_folder }}:/data"
-#           networks:
-#               default:
-#                   ipv4_address: "{{ nc_nextcloud_host }}"
-#           ports:
-#             - 443:443
-#           restart: unless-stopped
+    # - name: Create all containers of the Nextcloud application
+    #   docker_compose:
+    #     project_name: nextcloud
+    #     definition:
+    #       version: "2"
+    #       services:
+    #         nextcloud:
+    #           image: linuxserver/nextcloud
+    #           container_name: nextcloud
+    #           environment:
+    #             - PUID={{ dk_uid_user }}
+    #             - PGID={{ dk_gid_user }}
+    #             - TZ=Europe/London
+    #           volumes:
+    #             - "{{ dk_config_folder }}:/config"
+    #             - "{{ dk_data_folder }}:/data"
+    #           networks:
+    #               default:
+    #                   ipv4_address: "{{ nc_nextcloud_host }}"
+    #           ports:
+    #             - 443:443
+    #           restart: unless-stopped
 
-#         db:
-#           image: linuxserver/mariadb
-#           container_name: mariadb
-#           environment:
-#             - PUID={{ dk_uid_user }}
-#             - PGID={{ dk_gid_user }}
-#             - TZ=Europe/London
-#             - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
-#             - MYSQL_DATABASE={{ mysql_db_name }}
-#             - MYSQL_USER={{ mysql_db_user }}
-#             - MYSQL_PASSWORD={{ mysql_db_pass }}
-#             #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
-#           volumes:
-#             - "{{ dk_db_folder }}:/config"
-#           networks:
-#               default:
-#                   ipv4_address: "{{ mysql_db_host }}"
-#           # ports:
-#           #   - 3306:3306
-#           restart: unless-stopped
-#     networks:
-#       default:
-#         ipam:
-#           driver: default
-#           config:
-#           - subnet: "{{ net_subnet_range }}"
-#   register: output
+    #         db:
+    #           image: linuxserver/mariadb
+    #           container_name: mariadb
+    #           environment:
+    #             - PUID={{ dk_uid_user }}
+    #             - PGID={{ dk_gid_user }}
+    #             - TZ=Europe/London
+    #             - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
+    #             - MYSQL_DATABASE={{ mysql_db_name }}
+    #             - MYSQL_USER={{ mysql_db_user }}
+    #             - MYSQL_PASSWORD={{ mysql_db_pass }}
+    #             #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+    #           volumes:
+    #             - "{{ dk_db_folder }}:/config"
+    #           networks:
+    #               default:
+    #                   ipv4_address: "{{ mysql_db_host }}"
+    #           # ports:
+    #           #   - 3306:3306
+    #           restart: unless-stopped
+    #     networks:
+    #       default:
+    #         ipam:
+    #           driver: default
+    #           config:
+    #           - subnet: "{{ net_subnet_range }}"
+    #   register: output

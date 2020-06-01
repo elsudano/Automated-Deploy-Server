@@ -1,43 +1,46 @@
-- name: Setting the correct interpreter of python 
-  set_fact:
-    ansible_python_interpreter: "/usr/bin/python"
-
-- name: Gather the rpm package facts
-  package_facts:
-    manager: auto
-  register: output
-
-- name: If Webmin is installed
+- name: Tasks for config WebMin
+  tags: [ 'webmin' ]
   block:
-  - name: activate SSL and change path of the certificates files in miniserv.conf
-    lineinfile:
-      path: /etc/webmin/miniserv.conf
-      regexp: "{{ item.regex }}"
-      line: "{{ item.line }}"
-      state: present
-    with_items:
-      - { regex: '^keyfile=', line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
-      - { regex: '^certfile=', line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
-      - { regex: '^ssl=0', line: ssl=1 }
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python"
 
-  - name: activate SSL and change path of the certificates files in config
-    lineinfile:
-      path: /etc/webmin/config
-      line: "{{ item.line }}"
-      state: present
-    with_items:
-      - { line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
-      - { line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
-      - { line: ssl=1 }
+    - name: Gather the rpm package facts
+      package_facts:
+        manager: auto
+      register: output
 
-  when: "'webmin' in ansible_facts.packages"
+    - name: If Webmin is installed
+      block:
+      - name: activate SSL and change path of the certificates files in miniserv.conf
+        lineinfile:
+          path: /etc/webmin/miniserv.conf
+          regexp: "{{ item.regex }}"
+          line: "{{ item.line }}"
+          state: present
+        with_items:
+          - { regex: '^keyfile=', line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
+          - { regex: '^certfile=', line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
+          - { regex: '^ssl=0', line: ssl=1 }
 
-- name: Restart Webmin service
-  systemd:
-    name: webmin
-    state: restarted
-    enabled: yes
+      - name: activate SSL and change path of the certificates files in config
+        lineinfile:
+          path: /etc/webmin/config
+          line: "{{ item.line }}"
+          state: present
+        with_items:
+          - { line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
+          - { line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
+          - { line: ssl=1 }
 
-- name: Apply configuration for Custom commands
-  debug:
-    msg: Se supone que tienes que realizar la configuración de webmin
+      when: "'webmin' in ansible_facts.packages"
+
+    - name: Restart Webmin service
+      systemd:
+        name: webmin
+        state: restarted
+        enabled: yes
+
+    - name: Apply configuration for Custom commands
+      debug:
+        msg: Se supone que tienes que realizar la configuración de webmin

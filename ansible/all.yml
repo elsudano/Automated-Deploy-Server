@@ -16,20 +16,46 @@
       include_vars: vars/vault
       tags: always
 
-  tasks:
+    - name: Clean all yum data
+      command: yum clean all
+      args:
+        warn: yes
+      tags: always
+
     - name: Disable SELinux
       selinux:
         state: disabled
+      tags: always
+      register: task_result
 
+    - name: Reboot immediately if there was a change.
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      when: task_result is changed
+      tags: always
+
+    - name: Wait for the reboot to complete if there was a change.
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 1
+        delay: 5
+        timeout: 300
+      when: task_result is changed
+      tags: always
+
+    - name: Install dependencies for all playbooks
+      yum:
+        name: ['python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
+        state: present
+      tags: always
+      when: not ansible_check_mode
+
+  tasks:
     - name: Upgrade all packages
       yum:
         name: '*'
         state: latest
-
-    - name: Install dependencies for all playbooks
-      yum:
-        name: ['python2-pip.noarch', 'python36-PyMySQL', 'mariadb', 'mariadb-server', 'mariadb-devel']
-        state: present
 
     - name: Disable IPv& for all interfaces
       sysctl:
@@ -67,6 +93,31 @@
         update_password: always
         password: "{{ root_password | password_hash('sha512') }}"
 
+    - name: Change configuration of SSH daemon to root permit remote login with key
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regex }}"
+        line: "{{ item.line }}"
+        state: present
+      with_items:
+        - { regex: '^PermitRootLogin no', line: 'PermitRootLogin yes' }
+        - { regex: '^X11Forwarding yes',line: 'X11Forwarding no' }
+
+    - name: Reload and restart service SSHd
+      systemd:
+        name: sshd
+        state: restarted
+        enabled: yes
+
+    - name: Set both authorized key to root user
+      authorized_key:
+        user: root
+        state: present
+        key: "{{ item }}"
+      with_items:
+        - "{{ gn_file_pub_rsa_dev }}"
+        - "{{ gn_file_pub_rsa_pro }}"
+
     - name: Ensure group {{ dk_group_user }} exists
       group:
         name: "{{ dk_group_user }}"
@@ -84,12 +135,13 @@
         comment: Usuario genérico
         shell: /bin/bash
         update_password: always
+      when: not ansible_check_mode
 
     - name: Set authorized key taken from file
       authorized_key:
         user: "{{ dk_name_user }}"
         state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        key: "{{ gn_file_pub_rsa_pro }}"
       when: not ansible_check_mode
 
     - name: Allow {{ dk_name_user }} to have passwordless sudo

@@ -1,37 +1,37 @@
----
-- name: Setting the correct interpreter of python 
-  set_fact:
-    ansible_python_interpreter: "/usr/bin/python"
-  tags: always
-
-- name: Install plugin and bin of CertBot2
-  yum:
-    name: python2-certbot-dns-ovh.noarch
-    state: present
-  register: output
-  ignore_errors: yes
+- name: Tasks for config LetsEncrypt
   tags: [ 'letsencrypt' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python"
+      tags: always
 
-- name: Show error to the previous task if exist
-  debug:
-    msg: "{{ output }}"
-  tags: [ 'debug' ]
+    - name: Check if certificate already exists.
+      stat:
+        path: "{{ dk_config_folder }}"
+      register: config_dir
 
-- name: Copy the OVH config file to instance
-  copy:
-    src: vault/ovh.ini
-    dest: "{{ dk_config_folder }}/ovh.ini"
-    owner: root
-    mode: "0600"
-  tags: [ 'letsencrypt' ]
+    - name: If don't exist {{ dk_config_folder }} directory, I create
+      file:
+        path: "{{ dk_config_folder }}"
+        state: directory
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
+        mode: "0750"
+      when: not config_dir.stat.exists
 
-- name: Check if certificate already exists.
-  stat:
-    path: /etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem
-  register: letsencrypt_cert
-  tags: [ 'letsencrypt' ]
+    - name: Copy the OVH config file to instance
+      copy:
+        src: vault/ovh.ini
+        dest: "{{ dk_config_folder }}/ovh.ini"
+        owner: root
+        mode: "0600"
 
-- name: Generate new certificate if one doesn't exist.
-  shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ nc_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
-  when: letsencrypt_cert.stat.exists == false
-  tags: [ 'letsencrypt' ]
+    - name: Check if certificate already exists.
+      stat:
+        path: /etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem
+      register: letsencrypt_cert
+
+    - name: Generate new certificate if one doesn't exist.
+      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ nc_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      when: letsencrypt_cert.stat.exists == false
