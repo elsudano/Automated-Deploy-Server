@@ -86,13 +86,10 @@
         line: "    0 => '{{ dk_nc_subdomain }}',"
         state: present
 
-    - name: Check the installed apps
-      raw: "{{ nc_occ_command }} app:list"
-      register: nc_apps_installed
-
     - name: Install some applications
       raw: "{{ nc_occ_command }} app:install --quiet -- {{ item }}"
-      when: "'{{ item }}' not in nc_apps_installed.stdout"
+      register: result
+      failed_when: result.rc not in [0,1]
       with_items: "{{ nc_install_apps }}"
 
     - name: Check the disabled apps
@@ -128,13 +125,30 @@
         - "{{ nc_app_groups }}"
         - "{{ nc_app_users }}"
 
-    - name: Associate the groups at the applications Calendars, Bookmarks, Tasks
-      raw: "{{ nc_occ_command }} config:app:set --value=[\"admin\",\"{{ item }}\"] -- {{ item }} enabled"
-      when: "'{{ item }}' in nc_apps_installed.stdout"
+    # - name: Associate the groups at the applications Calendars, Bookmarks, Tasks
+    #   raw: "{{ nc_occ_command }} config:app:set --value=[\\\"admin\\\",\\\"{{ item }}\\\"] -- {{ item }} enabled"
+    #   when: "'{{ item }}' in nc_apps_installed.stdout"
+    #   with_items:
+    #     - bookmarks
+    #     - tasks
+    #     - calendar
+    #     - side_menu
+
+    - name: Check the installed apps
+      raw: "{{ nc_occ_command }} app:list"
+      register: nc_apps_installed
+
+    - name: Config at Side Menu application of the Nextcloud third party
+      raw: "{{ nc_occ_command }} config:app:set --value={{ item.value }} -- side_menu {{ item.key }}"
+      when: "'side_menu' in nc_apps_installed.stdout"
       with_items:
-        - bookmarks
-        - tasks
-        - calendar
+        - { key: 'enabled', value: '[\"admin\"]' }
+        - { key: 'opener-only', value: '1' }
+        - { key: 'display-logo', value: '0' }
+        - { key: 'size-text', value: 'normal' }
+        - { key: 'size-icon', value: 'normal' }
+
+# here you have put the import data of calendar bookmarks and tasks
 
     - name: Apply some index at DB and convert at BigInt filecache
       raw: "{{ nc_occ_command }} {{ item }}"

@@ -1,6 +1,10 @@
 - name: Tasks for install Webmin
   tags: [ 'webmin' ]
   block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python"
+
     - name: Started Firewalld to the instalation of Webmin
       service:
         name: firewalld
@@ -19,12 +23,13 @@
         description: Webmin Yum Repo
 
     - name: Install Webmin dependencies
-      yum:
+      package:
         name: ['perl-Authen-PAM', 'perl-Net-SSLeay', 'openssl', 'perl-IO-Tty', 'perl-Encode-Detect', 'python36-PyMySQL', 'mariadb', 'mariadb-server', 'mariadb-devel', 'perl']
         state: present
+        update_cache: true
 
     - name: Install Webmin in VPS instance
-      yum:
+      package:
         name: webmin
         state: present
       when: not ansible_check_mode

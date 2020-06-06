@@ -1,0 +1,8 @@
+---
+- name: Tasks for backup all data of NextCloud
+  tags: [ 'backup' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always

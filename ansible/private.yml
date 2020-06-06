@@ -2,25 +2,29 @@
 - name: Apply base configuration for OVH Instance
   hosts: 
     - private
-  
-  remote_user: root
+
   become_method: sudo
   become_user: root
   become: true
 
   vars:
     dk_nc_subdomain: "nc.{{ dk_domain }}"
-  
+    le_debug: false
+
   roles:
     - { role: geerlingguy.repo-epel, become: yes, tags: [ 'epel' ], when: ansible_os_family == 'RedHat' }
     - { role: geerlingguy.pip, tags: [ 'pip', 'nextcloud' ], when: ansible_os_family == 'RedHat' }
     - { role: geerlingguy.docker, check_mode: no, tags: [ 'nextcloud' ] }
 
   tasks: # the order of tasks it's important to the correct execution
-    - { name: Playbook to clean VPS instance, include_tasks: "tasks/{{ ansible_distribution }}/clean.yml", tags: [ 'never', 'clean', 'clean_my_data' ] }
-    - { name: Reset by default a Nextcloud Instalation, include_tasks: "tasks/{{ ansible_distribution }}/by_default.yml", tags: [ 'never', 'by_default' ] }
-    - { name: Production Settings, include_tasks: "tasks/{{ ansible_distribution }}/production.yml", tags: [ 'never', 'production' ] }
-    - { name: FirewallD Configuration, include_tasks: "tasks/{{ ansible_distribution }}/firewalld.yml", tags: [ 'never', 'firewall' ]}
+    - { name: Playbook to clean VPS instance, include_tasks: "tasks/Tools/clean.yml", tags: [ 'never', 'clean', 'clean_my_data' ] }
+    - { name: Reset by default a Nextcloud Instalation, include_tasks: "tasks/Tools/by_default.yml", tags: [ 'never', 'by_default' ] }
+    - { name: Production Settings, include_tasks: "tasks/Tools/production.yml", tags: [ 'never', 'production' ] }
+
+    - { name: Update Version MariaDB, include_tasks: "tasks/{{ ansible_distribution }}/backup/mariadb.yml", tags: [ 'never', 'backup' ]}
+    - { name: Update Version NextCloud, include_tasks: "tasks/{{ ansible_distribution }}/backup/nextcloud.yml", tags: [ 'never', 'backup' ]}
+
+    - { name: FirewallD Configuration, include_tasks: "tasks/{{ ansible_distribution }}/config/firewalld.yml", tags: [ 'firewall' ]}    
     - { name: Webmin Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/webmin.yml", tags: [ 'webmin' ] }
     - { name: Nextcloud Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/nextcloud.yml", tags: [ 'nextcloud' ] }
     - { name: LetsEncrypt Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/letsencrypt.yml", tags: [ 'letsencrypt' ] }

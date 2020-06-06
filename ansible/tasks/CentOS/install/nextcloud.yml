@@ -1,3 +1,4 @@
+---
 - name: Tasks for install NextCloud
   tags: [ 'nextcloud' ]
   block:
@@ -25,7 +26,8 @@
         name: "{{ mysql_container_name }}"
         image: linuxserver/mariadb
         recreate: yes
-        restart_policy: always
+        restart: yes
+        restart_policy: on-failure
         state: started
         # healthcheck:
         #   # Check if nginx server is he"althy by curl'ing the server.
@@ -61,7 +63,8 @@
         name: "{{ nc_container_name }}"
         image: linuxserver/nextcloud
         recreate: yes
-        restart_policy: always
+        restart: yes
+        restart_policy: on-failure
         state: started
         # healthcheck:
         #   # Check if nginx server is healthy by curl'ing the server.

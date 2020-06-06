@@ -45,6 +45,7 @@ PHONY += download
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
 	# @ansible-vault encrypt $(VAULT_ANSIBLE)/*.json > /dev/null
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
 	@ansible-vault encrypt ansible/vars/vault > /dev/null
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
@@ -54,6 +55,7 @@ PHONY += download
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
 	# @ansible-vault decrypt $(VAULT_ANSIBLE)/*.json > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
 	@ansible-vault decrypt ansible/vars/vault > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null

@@ -2,7 +2,6 @@
   hosts: 
     - all
 
-  remote_user: centos # Change this user according to instance we want deploy
   become_method: sudo
   become_user: root
   become: true
@@ -19,7 +18,7 @@
     - name: Clean all yum data
       command: yum clean all
       args:
-        warn: yes
+        warn: false
       tags: always
 
     - name: Disable SELinux
@@ -45,8 +44,8 @@
       tags: always
 
     - name: Install dependencies for all playbooks
-      yum:
-        name: ['python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
+      package:
+        name: [ 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
         state: present
       tags: always
       when: not ansible_check_mode

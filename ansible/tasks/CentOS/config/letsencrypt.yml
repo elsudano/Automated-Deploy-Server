@@ -33,5 +33,5 @@
       register: letsencrypt_cert
 
     - name: Generate new certificate if one doesn't exist.
-      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ nc_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
-      when: letsencrypt_cert.stat.exists == false
+      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      when: letsencrypt_cert.stat.exists == false and le_debug == false

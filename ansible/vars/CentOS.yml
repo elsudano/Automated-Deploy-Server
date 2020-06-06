@@ -15,9 +15,12 @@ dk_app_folder: "{{ dk_config_folder }}/www"
 dk_db_folder: "/ncBD"
 dk_data_folder: "/ncData"
 
- # Nextcloud Tasks
+# LetsEncrypt tasks
+le_email: pepitogrillo148@hotmail.com
+le_debug: false
+
+# Nextcloud Tasks
 nc_container_name: nextcloud
-nc_email: pepitogrillo148@hotmail.com
 nc_admin_user: admin
 nc_occ_command: "docker exec -it {{ nc_container_name }} sudo -u abc /usr/bin/php /config/www/nextcloud/occ"
 # The follow var it's in value
@@ -30,7 +33,10 @@ nc_nextcloud_host: "172.0.11.2"
 nc_app_groups:
   - { id: bookmarks, name: bookmarks }
   - { id: calendar, name: calendars }
+  - { id: contacts, name: contacts }
   - { id: tasks, name: tasks }
+  - { id: side_menu, name: side_menu }
+  - { id: users, name: users }
 nc_install_apps:
   - calendar
   - contacts
@@ -49,6 +55,7 @@ nc_disable_apps:
   - firstrunwizard
   - nextcloud_announcements
   - recommendations
+  - photos
   - support
   - survey_client
   - systemtags

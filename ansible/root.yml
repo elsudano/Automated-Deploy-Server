@@ -2,5 +2,3 @@
 - import_playbook: all.yml
 - import_playbook: private.yml
 - import_playbook: google.yml
-- import_playbook: aws.yml
-- import_playbook: test.yml

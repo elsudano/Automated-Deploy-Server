@@ -1,5 +1,5 @@
 [google]
-mync.sudano.net ansible_host=mync.sudano.net short_host=server
+mync.sudano.net ansible_ssh_user=centos ansible_host=mync.sudano.net short_host=server
 
 [aws]
 aws.sudano.net ansible_host=0.0.0.0 short_host=server
@@ -8,7 +8,7 @@ aws.sudano.net ansible_host=0.0.0.0 short_host=server
 do.sudano.net ansible_host=0.0.0.0 short_host=server
 
 [private]
-nc.sudano.net ansible_host=193.70.41.38 short_host=server
+nc.sudano.net ansible_ssh_user=root ansible_host=193.70.41.38 short_host=server
 
 [test]
 my.local.server ansible_host=0.0.0.0/0 short_host=test
