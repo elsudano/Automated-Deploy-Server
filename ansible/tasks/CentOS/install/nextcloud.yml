@@ -49,6 +49,7 @@
         chain: "{{ item }}"
         flush: yes
       register: flush_iptables
+      when: ansible_hostname == 'digital_ocean'
       with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
     - name: Create a application container Nextcloud

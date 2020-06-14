@@ -118,12 +118,14 @@
       raw: "docker exec -it {{ nc_container_name }} sudo -u abc OC_PASS={{ item.pass }} /usr/bin/php /config/www/nextcloud/occ  user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}"
       when: "'{{ item.id }}' not in nc_exist_users.stdout"
       with_items: "{{ nc_app_users }}"
+      no_log: true
 
     - name: Join Groups with Users
       raw: "{{ nc_occ_command }}  group:adduser --quiet {{ item[0].id }} {{ item[1].id }}"
       with_nested:
         - "{{ nc_app_groups }}"
         - "{{ nc_app_users }}"
+      no_log: true
 
     # - name: Associate the groups at the applications Calendars, Bookmarks, Tasks
     #   raw: "{{ nc_occ_command }} config:app:set --value=[\\\"admin\\\",\\\"{{ item }}\\\"] -- {{ item }} enabled"

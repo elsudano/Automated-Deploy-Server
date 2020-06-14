@@ -3,12 +3,12 @@ module "google" {
 }
 module "google_net" {
   source               = "../../networking/google_net"
-  google_vpc_name      = "${var.google_vpc_name}"
-  google_firewall_name = "${var.google_firewall_name}"
+  google_vpc_name      = var.google_vpc_name
+  google_firewall_name = var.google_firewall_name
 }
 resource "google_compute_instance" "google_frontend" {
-  name         = "${var.google_reource_frontend_name}"
-  machine_type = "${var.google_reource_frontend_machine_type}"
+  name         = var.google_reource_frontend_name
+  machine_type = var.google_reource_frontend_machine_type
   # Optionals attributes but utils for management  
   allow_stopping_for_update = "true"
   description               = "Instance frontend for Nextcloud"
@@ -22,7 +22,7 @@ resource "google_compute_instance" "google_frontend" {
 
   network_interface {
     # network = "default"
-    network = "${module.google_net.google_vpc_link}"
+    network = module.google_net.google_vpc_link
     access_config {
     }
   }
@@ -78,10 +78,10 @@ resource "google_compute_instance" "google_frontend" {
   # }
   connection {
     type        = "ssh"
-    host        = "${google_compute_instance.google_frontend.network_interface[0].access_config[0].nat_ip}"
-    user        = "${var.ssh_user}"
+    host        = google_compute_instance.google_frontend.network_interface[0].access_config[0].nat_ip
+    user        = var.ssh_user
     password    = ""
     timeout     = "240s"
-    private_key = "${file(var.private_key)}"
+    private_key = file(var.private_key)
   }
 }

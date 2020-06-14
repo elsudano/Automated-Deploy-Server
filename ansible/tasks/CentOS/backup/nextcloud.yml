@@ -26,9 +26,9 @@
       with_items: "{{ nc_app_users }}"
       no_log: True
 
-    - name: Show data folders of users
-      debug:
-        msg: "{{ folders_to_scan }}"
+    # - name: Show data folders of users
+    #   debug:
+    #     msg: "{{ folders_to_scan }}"
 
     - name: Backup of contacts from webUI of Nextcloud for all Users
       get_url:
@@ -46,9 +46,9 @@
       with_items: "{{ nc_app_users }}"
       no_log: True
 
-    - name: Show the calendars of all users
-      debug:
-        msg: "{{ calendars_of_users.results }}"
+    # - name: Show the calendars of all users
+    #   debug:
+    #     msg: "{{ calendars_of_users.results }}"
 
     - name: Backup calendars of each users
       include_tasks: calendars.yml
@@ -59,7 +59,7 @@
         url: "https://{{ dk_nc_subdomain }}/apps/bookmarks/public/rest/v2/bookmark/export"
         url_username: "{{ item.id }}"
         url_password: "{{ item.pass }}"
-        dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-bookmarks.json"
+        dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-bookmarks.html"
         force_basic_auth: yes
       with_items: "{{ nc_app_users }}"
       no_log: True
@@ -68,3 +68,19 @@
       raw: "{{ nc_occ_command }} files:scan --home-only --quiet {{ item.id }}"
       with_items: "{{ nc_app_users }}"
       no_log: True
+
+    - name: Copy bash files for automate backups
+      copy:
+        src: templates/nextcloud_backup.j2
+        dest: "{{ dk_config_folder }}/nextcloud_backup.sh"
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
+        mode: "0700"
+
+    - name: Setting a cronjob to make the backups
+      copy:
+        src: templates/cron_nextcloud_backup.j2
+        dest: /etc/cron.d/nextcloud_backup
+        owner: root
+        group: root
+        mode: "0600"

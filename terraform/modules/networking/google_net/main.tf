@@ -2,12 +2,12 @@ module "google" {
   source = "../../providers/google"
 }
 resource "google_compute_network" "fpc_vpc" {
-  name                    = "${var.google_vpc_name}"
+  name                    = var.google_vpc_name
   auto_create_subnetworks = "true"
 }
 resource "google_compute_firewall" "fpc_firewall" {
-  name    = "${var.google_firewall_name}"
-  network = "${google_compute_network.fpc_vpc.name}"
+  name    = var.google_firewall_name
+  network = google_compute_network.fpc_vpc.name
 
   allow {
     protocol = "tcp"
