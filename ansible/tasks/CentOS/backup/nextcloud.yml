@@ -6,3 +6,65 @@
       set_fact:
         ansible_python_interpreter: "/usr/bin/python3"
       tags: always
+
+    - name: "Create a data folder of user if it does not exist"
+      file:
+        path: "{{ dk_data_folder }}/{{ item.id }}/files/"
+        state: directory
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
+      with_items: "{{ nc_app_users }}"
+      no_log: True
+
+    - name: Analyzing the Nextcloud directories to rescan...
+      find:
+        paths: [ "{{ dk_data_folder }}" ]
+        patterns: [ "{{ item.id }}" ]
+        use_regex: true
+        file_type: directory
+      register: folders_to_scan
+      with_items: "{{ nc_app_users }}"
+      no_log: True
+
+    - name: Show data folders of users
+      debug:
+        msg: "{{ folders_to_scan }}"
+
+    - name: Backup of contacts from webUI of Nextcloud for all Users
+      get_url:
+        url: "https://{{ dk_nc_subdomain }}/remote.php/dav/addressbooks/users/{{ item.id }}/contacts/?export"
+        url_username: "{{ item.id }}"
+        url_password: "{{ item.pass }}"
+        dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-contacts.vcf"
+        force_basic_auth: yes
+      with_items: "{{ nc_app_users }}"
+      no_log: True
+
+    - name: List all calendars to user
+      raw: "{{ nc_occ_command }} dav:list-calendars {{ item.id }} | grep {{ item.id }} | cut -d \\| -f2 | tr -d ' '"
+      register: calendars_of_users
+      with_items: "{{ nc_app_users }}"
+      no_log: True
+
+    - name: Show the calendars of all users
+      debug:
+        msg: "{{ calendars_of_users.results }}"
+
+    - name: Backup calendars of each users
+      include_tasks: calendars.yml
+      with_items: "{{ calendars_of_users.results }}"
+
+    - name: Backup of Bookmarks from webUI of Nextcloud for all Users
+      get_url: 
+        url: "https://{{ dk_nc_subdomain }}/apps/bookmarks/public/rest/v2/bookmark/export"
+        url_username: "{{ item.id }}"
+        url_password: "{{ item.pass }}"
+        dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-bookmarks.json"
+        force_basic_auth: yes
+      with_items: "{{ nc_app_users }}"
+      no_log: True
+
+    - name: Refresh data of folders to users
+      raw: "{{ nc_occ_command }} files:scan --home-only --quiet {{ item.id }}"
+      with_items: "{{ nc_app_users }}"
+      no_log: True

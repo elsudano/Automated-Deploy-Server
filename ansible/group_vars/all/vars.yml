@@ -15,9 +15,23 @@ dk_app_folder: "{{ dk_config_folder }}/www"
 dk_db_folder: "/ncBD"
 dk_data_folder: "/ncData"
 
+# Portainer vars
+pt_container_name: portainer
+pt_data_folder: "/ptData"
+pt_host: "172.0.11.4"
+
+# Firewalls variables
+fw_ports:
+  - 22/tcp
+  - 443/tcp
+  - 8000/tcp
+  - 9000/tcp
+  - 9090/tcp
+  - 10000/tcp
+
 # LetsEncrypt tasks
 le_email: pepitogrillo148@hotmail.com
-le_debug: false
+# le_debug: false
 
 # Nextcloud Tasks
 nc_container_name: nextcloud

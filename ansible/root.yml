@@ -1,4 +1,5 @@
 ---
 - import_playbook: all.yml
-- import_playbook: private.yml
-- import_playbook: google.yml
+- import_playbook: deployments.yml
+- import_playbook: backups.yml
+- import_playbook: tools.yml

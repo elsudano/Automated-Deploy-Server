@@ -31,12 +31,12 @@ variable "ovh_zone" {
 variable "ovh_subdomain" {
   type        = "string"
   description = "(Required) Subdomain created for the instance."
-  default     = "mync"
+  default     = "donc"
 }
 variable "vmws_frontend_name" {
   type        = "string"
   description = "(Required) The Name of VM in WS "
-  default     = "server"
+  default     = "doserver"
 }
 variable "vmws_frontend_image" {
   type        = "string"

@@ -1,14 +1,44 @@
-[google]
-mync.sudano.net ansible_ssh_user=centos ansible_host=mync.sudano.net short_host=server
+[all:children]
+aws
+digital_ocean
+google
+private
 
 [aws]
-aws.sudano.net ansible_host=0.0.0.0 short_host=server
+aws
+
+[aws:vars]
+ansible_ssh_user=centos
+ansible_host=awsnc.sudano.net
+short_host=server
 
 [digital_ocean]
-do.sudano.net ansible_host=0.0.0.0 short_host=server
+digital_ocean
+
+[digital_ocean:vars]
+ansible_ssh_user=centos
+ansible_host=donc.sudano.net
+short_host=server
+
+[google]
+google
+
+[google:vars]
+ansible_ssh_user=centos
+ansible_host=mync.sudano.net
+short_host=server
 
 [private]
-nc.sudano.net ansible_ssh_user=root ansible_host=193.70.41.38 short_host=server
+private
+
+[private:vars]
+ansible_ssh_user=root
+ansible_host=nc.sudano.net
+short_host=server
 
 [test]
-my.local.server ansible_host=0.0.0.0/0 short_host=test
+test
+
+[test:vars]
+ansible_host=0.0.0.0/0
+short_host=test

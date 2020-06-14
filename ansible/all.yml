@@ -7,14 +7,6 @@
   become: true
 
   pre_tasks:
-    - name: Including all vars to run all roles and tasks
-      include_vars: vars/{{ ansible_distribution }}.yml
-      tags: always
-
-    - name: Including encrypt vars
-      include_vars: vars/vault
-      tags: always
-
     - name: Clean all yum data
       command: yum clean all
       args:
@@ -31,7 +23,7 @@
       shell: "sleep 5 && reboot"
       async: 1
       poll: 0
-      when: task_result is changed
+      when: task_result is changed and not ansible_check_mode
       tags: always
 
     - name: Wait for the reboot to complete if there was a change.
@@ -40,12 +32,19 @@
         sleep: 1
         delay: 5
         timeout: 300
-      when: task_result is changed
+      when: task_result is changed and not ansible_check_mode
       tags: always
+
+    - name: Install epel repository
+      package:
+        name: [ 'epel-release' ]
+        state: present
+      tags: always
+      when: not ansible_check_mode and ansible_distribution == 'CentOS'
 
     - name: Install dependencies for all playbooks
       package:
-        name: [ 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
+        name: [ 'firewalld', 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
         state: present
       tags: always
       when: not ansible_check_mode
@@ -69,21 +68,17 @@
 
     - name: Open requiered port in FirewallD
       firewalld:
-        port: "{{ item.port }}"
+        port: "{{ item }}"
         permanent: yes
         state: enabled
-      with_items:
-       - { port: 22/tcp }
-       - { port: 443/tcp }
-       - { port: 9090/tcp }
-       - { port: 10000/tcp }
+      with_items: "{{ fw_ports }}"
 
     - name: Disable and stop the firewalld service
       service:
         name: firewalld
         state: stopped
         enabled: false
-      when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+      when: distribution == "CentOS" and distribution_major_version == "7"
       tags: [ 'never', 'debug' ]
 
     - name: Change a root password
@@ -98,15 +93,19 @@
         regexp: "{{ item.regex }}"
         line: "{{ item.line }}"
         state: present
+      register: change_ssh_config
       with_items:
         - { regex: '^PermitRootLogin no', line: 'PermitRootLogin yes' }
         - { regex: '^X11Forwarding yes',line: 'X11Forwarding no' }
+        - { regex: '^HostKey /etc/ssh/ssh_host_ecdsa_key',line: '#HostKey /etc/ssh/ssh_host_ecdsa_key' }
+        - { regex: '^HostKey /etc/ssh/ssh_host_ed25519_key',line: '#HostKey /etc/ssh/ssh_host_ed25519_key' }
 
     - name: Reload and restart service SSHd
       systemd:
         name: sshd
         state: restarted
         enabled: yes
+      when: change_ssh_config is changed
 
     - name: Set both authorized key to root user
       authorized_key:

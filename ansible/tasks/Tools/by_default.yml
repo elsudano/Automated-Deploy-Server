@@ -17,10 +17,11 @@
     - name: Analyzing the Nextcloud directories to delete...
       find:
         paths: [ "{{ dk_data_folder }}" ]
-        patterns: [ "appdata_*", "files_*", "{{ nc_admin_user }}" ]
+        patterns: [ "appdata_*", "files_*", "{{ item.id }}" ]
         use_regex: true
         file_type: directory
       register: folders_to_delete
+      with_items: "{{ nc_app_users }}"
 
     - name: Deleting the Nextcloud directories...
       file:

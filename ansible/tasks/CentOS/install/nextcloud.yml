@@ -7,20 +7,6 @@
         ansible_python_interpreter: "/usr/bin/python3"
       tags: always
 
-    - name: Restart Docker service because some times the service it's blocked
-      service:
-        name: docker
-        state: restarted
-
-    - name: Change config of {{ net_name_network }} network with custom IPAM config
-      docker_network:
-        name: "{{ net_name_network }}"
-        enable_ipv6: no
-        ipam_config:
-          - subnet: "{{ net_cidr }}"
-            gateway: "{{ net_gateway_ip }}"
-            iprange: "{{ net_subnet_range }}"
-
     - name: Create a database container MariaDB
       docker_container:
         name: "{{ mysql_container_name }}"
@@ -57,6 +43,13 @@
         # ports:
         #   - 3306:3306
       when: not ansible_check_mode        
+
+    - name: Iptables flush filter
+      iptables:
+        chain: "{{ item }}"
+        flush: yes
+      register: flush_iptables
+      with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
     - name: Create a application container Nextcloud
       docker_container:

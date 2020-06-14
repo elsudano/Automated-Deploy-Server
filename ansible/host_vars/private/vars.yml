@@ -1,0 +1,3 @@
+---
+dk_nc_subdomain: "nc.{{ dk_domain }}"
+le_debug: False

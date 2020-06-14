@@ -6,7 +6,7 @@
         ansible_python_interpreter: "/usr/bin/python"
       tags: always
 
-    - name: Check if certificate already exists.
+    - name: Check if config folder already exists.
       stat:
         path: "{{ dk_config_folder }}"
       register: config_dir
@@ -34,4 +34,8 @@
 
     - name: Generate new certificate if one doesn't exist.
       shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
-      when: letsencrypt_cert.stat.exists == false and le_debug == false
+      when: not letsencrypt_cert.stat.exists and not le_debug
+
+    - name: Check the dry-run of generate certificate
+      shell: "certbot-2 certonly --dry-run --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      when: not letsencrypt_cert.stat.exists and le_debug

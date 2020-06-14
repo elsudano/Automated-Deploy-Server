@@ -1,0 +1,22 @@
+---
+- name: Backup of all calendars by user
+  block:
+  - name: Build a list of calendars to user {{ item.item.name }}.
+    set_fact:
+      calendars_of_user: "{{ item.stdout_lines }}"
+
+  # - name: Show the calendars of user
+  #   debug:
+  #     msg: "{{ calendars_of_user }}"
+      
+  - name: Backup calendar of user {{ item.item.name }}.
+    get_url:
+      url: "https://{{ dk_nc_subdomain }}/remote.php/dav/calendars/{{ item.item.id }}/{{ calendar }}/?export"
+      url_username: "{{ item.item.id }}"
+      url_password: "{{ item.item.pass }}"
+      dest: "{{ dk_data_folder }}/{{ item.item.id }}/files/{{ item.item.name }}-{{ ansible_date_time.date }}-calendar-{{ calendar }}.ics"
+      force_basic_auth: yes
+    loop: "{{ calendars_of_user|flatten(levels=1) }}"
+    loop_control:
+      loop_var: calendar
+    no_log: True
