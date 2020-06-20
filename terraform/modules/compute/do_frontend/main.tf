@@ -1,5 +1,5 @@
 module "do" {
-  source        = "../../providers/do"
+  source = "../../providers/do"
 }
 resource "digitalocean_ssh_key" "default" {
   name       = "SSH Key"

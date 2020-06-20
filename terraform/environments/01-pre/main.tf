@@ -1,8 +1,3 @@
-terraform {
-  backend "local" {
-    path = "terraform/environments/01-pre/terraform.tfstate"
-  }
-}
 module "google_frontend" {
   source = "../../modules/compute/google_frontend"
   ssh_user                             = var.ssh_user

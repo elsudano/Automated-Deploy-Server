@@ -4,13 +4,17 @@ VAULT_ANSIBLE = ansible/vault
 VAULT_TERRAFORM = terraform/vault
 PROVARS = $(VAULT_TERRAFORM)/pro.tfvars
 PREVARS = $(VAULT_TERRAFORM)/pre.tfvars
+PRIVVARS = $(VAULT_TERRAFORM)/priv.tfvars
 DEVVARS = $(VAULT_TERRAFORM)/dev.tfvars
+ARMVARS = $(VAULT_TERRAFORM)/arm.tfvars
 PRIVATE_KEY = ~/.ssh/id_rsa_deploying
 EXTRA_SSH_COMMAND = -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 BASE_TERRAFORM = terraform/environments
 PRODIR = $(BASE_TERRAFORM)/00-pro
 PREDIR = $(BASE_TERRAFORM)/01-pre
+PRIVDIR = $(BASE_TERRAFORM)/03-priv
 DEVDIR = $(BASE_TERRAFORM)/02-dev
+ARMDIR = $(BASE_TERRAFORM)/04-arm
 OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
 TFVER = 0.12.8
@@ -30,7 +34,7 @@ PHONY += prerequisites
 	@sudo mv /tmp/terraform /usr/bin/
 
 PHONY += bootstrap 
-02_bootstrap: --check_vault_file --requirements --terraform_init ## Prepare environment for deploy automatically
+02_bootstrap: --check_vault_file --requirements --setEnviVar --terraform_init ## Prepare environment for deploy automatically
 
 PHONY += deploy_check
 03_deploy_check: 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
@@ -96,7 +100,15 @@ PHONY += hard_clean
 #    Private Functions                                  #
 #-------------------------------------------------------#
 --Fedora:
-	@sudo dnf install -y wget.x86_64 unzip.x86_64 python3-fabric.noarch python3-dnf.noarch ansible.noarch
+	@sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+	@sudo bash -c 'echo -e \
+"[azure-cli]\n\
+name=Azure CLI\n\
+baseurl=https://packages.microsoft.com/yumrepos/azure-cli\n\
+enabled=1\n\
+gpgcheck=1\n\
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+	@sudo dnf install -y azure-cli wget.x86_64 unzip.x86_64 python3-fabric.noarch python3-dnf.noarch ansible.noarch
 
 --Ubuntu:
 	@sudo apt update -y
@@ -130,11 +142,13 @@ PHONY += hard_clean
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/env_vars_ovh.sh ]; then echo "Please create and complete the $(VAULT_ANSIBLE)/env_vars_ovh.sh file with correct values inside"; fi;'
 
---terraform_init: $(ENVIVARS) #$(ENVIDIR)/main.tf $(ENVIDIR)/variables.tf $(ENVIDIR)/outputs.tf
-	@stat $(ENVIDIR)/main.tf
-	@stat $(ENVIDIR)/variables.tf
-	@stat $(ENVIDIR)/outputs.tf
-	@terraform init -var-file="$(ENVIVARS)" $(ENVIDIR)
+--terraform_init: $(ENVIVARS)
+	@stat -c "%n %U %G %A %s" $(ENVIDIR)/main.tf
+	@stat -c "%n %U %G %A %s" $(ENVIDIR)/variables.tf
+	@stat -c "%n %U %G %A %s" $(ENVIDIR)/outputs.tf
+	@stat -c "%n %U %G %A %s" $(ENVIDIR)/backend.tf
+	@echo "terraform init -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)"
+	@terraform init -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --upload: 
 	@git add .
@@ -163,21 +177,35 @@ else ifeq ($(ENVI),PRO)
 else ifeq ($(ENVI),PRE)
 	$(eval ENVIDIR := $(PREDIR))
 	$(eval ENVIVARS := $(PREVARS))
+else ifeq ($(ENVI),PRIV)
+	$(eval ENVIDIR := $(PRIVDIR))
+	$(eval ENVIVARS := $(PRIVVARS))
 else ifeq ($(ENVI),DEV)
 	$(eval ENVIDIR := $(DEVDIR))
 	$(eval ENVIVARS := $(DEVVARS))
+else ifeq ($(ENVI),ARM)
+	$(eval ENVIDIR := $(ARMDIR))
+	$(eval ENVIVARS := $(ARMVARS))
 endif
 
 --settingVars:
 ifeq ($(ENVI),PRO)
-	$(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \"))
-	$(eval INSTANCE := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
-	$(eval DOMAIN := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
+	$(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \"))
+	$(eval INSTANCE := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
+	$(eval DOMAIN := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
 else ifeq ($(ENVI),PRE)
-	$(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \"))
-	$(eval INSTANCE := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
-	$(eval DOMAIN := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
+	$(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \"))
+	$(eval INSTANCE := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
+	$(eval DOMAIN := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
+else ifeq ($(ENVI),PRIV)
+	$(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \"))
+	$(eval INSTANCE := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "") | .instances[0].attributes.id' | tr -d \"))
+	$(eval DOMAIN := $(shell cat $(ENVIDIR)/.terraform/terraform.tfstate | jq '.resources[] | select(.type == "") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
 else ifeq ($(ENVI),DEV)
+	$(eval PUBLIC_IP := "localhost")
+	$(eval INSTANCE := "")
+	$(eval DOMAIN := "")
+else ifeq ($(ENVI),ARM)
 	$(eval PUBLIC_IP := "localhost")
 	$(eval INSTANCE := "")
 	$(eval DOMAIN := "")
