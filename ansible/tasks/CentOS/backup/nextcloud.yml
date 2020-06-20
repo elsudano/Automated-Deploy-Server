@@ -36,6 +36,8 @@
         url_username: "{{ item.id }}"
         url_password: "{{ item.pass }}"
         dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-contacts.vcf"
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
         force_basic_auth: yes
       with_items: "{{ nc_app_users }}"
       no_log: True
@@ -60,6 +62,8 @@
         url_username: "{{ item.id }}"
         url_password: "{{ item.pass }}"
         dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-bookmarks.html"
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
         force_basic_auth: yes
       with_items: "{{ nc_app_users }}"
       no_log: True
