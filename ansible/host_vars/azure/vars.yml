@@ -1,0 +1,3 @@
+---
+dk_nc_subdomain: "aznc.{{ dk_domain }}"
+le_debug: True

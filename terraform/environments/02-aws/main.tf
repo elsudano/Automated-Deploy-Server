@@ -25,6 +25,7 @@ module "azure_net" {
   arm_subnet_name             = var.arm_subnet_name
   arm_cidr_subnet_network     = var.arm_cidr_subnet_network
   arm_nic_name                = var.arm_nic_name
+  arm_pip_name                = var.arm_pip_name
   arm_resource_group_name     = module.azure_resource_group.arm_resource_group_name
   arm_resource_group_location = module.azure_resource_group.arm_resource_group_location
 }
@@ -41,9 +42,9 @@ module "azure_frontend" {
   arm_resource_group_name     = module.azure_resource_group.arm_resource_group_name
   arm_resource_group_location = module.azure_resource_group.arm_resource_group_location
 }
-# module "ovh_domain" {
-#   source        = "../../modules/networking/ovh_domain"
-#   ovh_zone      = var.ovh_zone
-#   ovh_subdomain = var.ovh_subdomain
-#   ovh_target    = module.do_net.public_ip
-# }
+module "ovh_domain" {
+  source        = "../../modules/networking/ovh_domain"
+  ovh_zone      = var.ovh_zone
+  ovh_subdomain = var.ovh_subdomain
+  ovh_target    = module.azure_net.arm_public_ip
+}

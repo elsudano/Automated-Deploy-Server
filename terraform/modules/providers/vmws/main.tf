@@ -1,3 +1,3 @@
-# provider "vmworkstation" {
-#   version = "~> 0.1"
-# }
+provider "vmworkstation" {
+  version = "~> 0.1"
+}

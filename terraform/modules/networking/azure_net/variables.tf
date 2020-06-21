@@ -18,6 +18,10 @@ variable "arm_nic_name" {
   type        = string
   description = "(Required) The name of the nic in the instance"
 }
+variable "arm_pip_name" {
+  type        = string
+  description = "(Required) The name of the public ip in the instance"
+}
 variable "arm_resource_group_name" {
   type        = string
   description = "(Required) The name of the Resource Group where storage the network"

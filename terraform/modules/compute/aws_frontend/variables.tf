@@ -9,7 +9,7 @@ variable "public_key" {
 }
 variable "private_key" {
   type        = string
-  description = "(Required) Path the file of Private KEY for accessing to instance"
+  description = "(Optional) Path the file of Private KEY for accessing to instance"
 }
 variable "arm_resource_group_name" {
   type        = string
@@ -19,25 +19,9 @@ variable "arm_resource_group_location" {
   type        = string
   description = "(Required) The location of Resource Group"
 }
-variable "arm_vpc_name" {
+variable "arm_nic_id" {
   type        = string
-  description = "(Required) The name of VPC for the project"
-}
-variable "arm_cidr_vpc_network" {
-  type        = list(string)
-  description = "(Required) The address of network for the VPC format: [\"10.10.10.0/24\",]"
-}
-variable "arm_subnet_name" {
-  type        = string
-  description = "(Required) The name of the nic in the instance"
-}
-variable "arm_cidr_subnet_network" {
-  type        = list(string)
-  description = "(Required) The addresses of subnet network format: [\"10.10.10.0/24\",]"
-}
-variable "arm_nic_name" {
-  type        = string
-  description = "(Required) The name of the nic in the instance"
+  description = "(Required) This is the ID of the nic to the instance"
 }
 variable "arm_name_instance" {
   type        = string

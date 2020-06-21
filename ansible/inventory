@@ -1,5 +1,6 @@
 [all:children]
 aws
+azure
 digital_ocean
 google
 private
@@ -10,6 +11,14 @@ aws
 [aws:vars]
 ansible_ssh_user=centos
 ansible_host=awsnc.sudano.net
+short_host=server
+
+[azure]
+azure
+
+[azure:vars]
+ansible_ssh_user=centos
+ansible_host=aznc.sudano.net
 short_host=server
 
 [digital_ocean]
