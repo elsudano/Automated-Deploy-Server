@@ -1,30 +1,30 @@
-module "azurerm" {
-  source = "../../providers/azure"
+module "aws" {
+  source = "../../providers/aws"
 }
-resource "azurerm_linux_virtual_machine" "azure_frontend" {
-  name                = var.arm_name_instance
-  resource_group_name = var.arm_resource_group_name
-  location            = var.arm_resource_group_location
-  size                = var.arm_size_instance
-  admin_username      = var.ssh_user
-  network_interface_ids = [
-    var.arm_nic_id,
-  ]
-
-  admin_ssh_key {
-    username   = var.ssh_user
-    public_key = file(var.public_key)
+module "aws_centos" {
+  source = "../../amis/aws_centos"
+}
+module "aws_net" {
+  source       = "../../networking/aws_net"
+}
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer_key"
+  public_key = file(var.public_key)
+}
+resource "aws_instance" "aws_frontend" {
+  ami                         = module.aws_centos.centos_7_id
+  instance_type               = "t2.micro"
+  subnet_id                   = module.aws_net.aws_subnet_id
+  vpc_security_group_ids      = [module.aws_net.aws_security_group_id]
+  # associate_public_ip_address = true
+  key_name                    = aws_key_pair.deployer.key_name
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp2"
   }
-
-  os_disk {
-    caching              = var.arm_config_os_disk[0]
-    storage_account_type = var.arm_config_os_disk[1]
+  
+  tags = {
+    Name = "AWS_FRONTEND"
   }
-
-  source_image_reference {
-    publisher = var.arm_config_image[0]
-    offer     = var.arm_config_image[1]
-    sku       = var.arm_config_image[2]
-    version   = var.arm_config_image[3]
-  }
+  depends_on = [module.aws_net]
 }

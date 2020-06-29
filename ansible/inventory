@@ -3,7 +3,7 @@ aws
 azure
 digital_ocean
 google
-private
+ovh
 
 [aws]
 aws
@@ -37,10 +37,10 @@ ansible_ssh_user=centos
 ansible_host=mync.sudano.net
 short_host=server
 
-[private]
-private
+[ovh]
+ovh
 
-[private:vars]
+[ovh:vars]
 ansible_ssh_user=root
 ansible_host=nc.sudano.net
 short_host=server

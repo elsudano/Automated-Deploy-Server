@@ -4,7 +4,7 @@ VAULT_ANSIBLE = ansible/vault
 VAULT_TERRAFORM = terraform/vault
 OVHVARS = $(VAULT_TERRAFORM)/ovh.tfvars
 GCPVARS = $(VAULT_TERRAFORM)/gcp.tfvars
-AWSVVARS = $(VAULT_TERRAFORM)/aws.tfvars
+AWSVARS = $(VAULT_TERRAFORM)/aws.tfvars
 ARMVARS = $(VAULT_TERRAFORM)/arm.tfvars
 DOVARS = $(VAULT_TERRAFORM)/do.tfvars
 VMWVARS = $(VAULT_TERRAFORM)/vmw.tfvars
@@ -26,6 +26,15 @@ TFVER = 0.12.8
 #-------------------------------------------------------#
 PHONY += help
 help:
+	@echo -e "Some of the follow options it's permmit for ENVI var: "
+	@echo -e "\t- OVH deploy OVH server"
+	@echo -e "\t- GCP deploy Google server"
+	@echo -e "\t- DO deploy Digital Ocean server"
+	@echo -e "\t- AWS deploy Amazon server"
+	@echo -e "\t- ARM deploy Azure server"
+	@echo -e "\t- VMW deploy VmWare Workstation server"
+	@echo
+	@echo -e "Command: make ENVI=GCP 03_deploy_check"
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| sort | awk 'BEGIN {FS = ":.*?## "}; \
 	{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -180,8 +189,8 @@ else ifeq ($(ENVI),GCP)
 	$(eval ENVIDIR := $(GCPDIR))
 	$(eval ENVIVARS := $(GCPVARS))
 else ifeq ($(ENVI),AWS)
-	$(eval ENVIDIR := $(AWSVDIR))
-	$(eval ENVIVARS := $(AWSVVARS))
+	$(eval ENVIDIR := $(AWSDIR))
+	$(eval ENVIVARS := $(AWSVARS))
 else ifeq ($(ENVI),ARM)
 	$(eval ENVIDIR := $(ARMDIR))
 	$(eval ENVIVARS := $(ARMVARS))

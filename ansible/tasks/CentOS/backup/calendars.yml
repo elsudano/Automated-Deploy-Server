@@ -21,4 +21,3 @@
     loop: "{{ calendars_of_user|flatten(levels=1) }}"
     loop_control:
       loop_var: calendar
-    no_log: True
