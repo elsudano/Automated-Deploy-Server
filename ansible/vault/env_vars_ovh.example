@@ -1,27 +1,38 @@
 #!/bin/bash
 
 # Config for DigitalOcean provider
-export DIGITALOCEAN_TOKEN="TOKEN"
+export DIGITALOCEAN_TOKEN=""
+
+# Config AWS provider on Terraform user
+export AWS_ACCESS_KEY_ID=""
+export AWS_SECRET_ACCESS_KEY=""
+export AWS_DEFAULT_REGION=""
+
+# Config ARM credentials for terraform (Azure)
+export ARM_CLIENT_ID=""
+export ARM_ENVIRONMENT=""
+export ARM_SUBSCRIPTION_ID=""
+export ARM_TENANT_ID=""
 
 # File of credentials for google provider of terraform
-export GOOGLE_CREDENTIALS="FILE.json"
-export CLOUDSDK_CORE_PROJECT="NAME"
-export CLOUDSDK_COMPUTE_REGION="us-central1"
-export CLOUDSDK_COMPUTE_ZONE="us-central1-c"
+export GOOGLE_CREDENTIALS=""
+export CLOUDSDK_CORE_PROJECT=""
+export CLOUDSDK_COMPUTE_REGION=""
+export CLOUDSDK_COMPUTE_ZONE=""
 
 # Config for OVH Provider
-export OVH_ENDPOINT=ovh-eu
-export OVH_APPLICATION_KEY=[application_key]
-export OVH_APPLICATION_SECRET=[application_secret]
-export OVH_CONSUMER_KEY=[consumer_key]
+export OVH_ENDPOINT=
+export OVH_APPLICATION_KEY=
+export OVH_APPLICATION_SECRET=
+export OVH_CONSUMER_KEY=
 
 # Custom provider VmWare Workstation
-export VMWS_USER="admin"
-export VMWS_PASSWORD="PASSWORD"
-export VMWS_URL="https://localhost:8697/api/#/"
+export VMWS_USER=""
+export VMWS_PASSWORD=""
+export VMWS_URL=""
 export VMWS_HTTPS=false
 export VMWS_DEBUG=true
 
 # Terraform log settings
-# export TF_LOG=TRACE # INFO, DEBUG, TRACE
-# export TF_LOG_PATH="terraform.txt"
+export TF_LOG=DEBUG # INFO, DEBUG, TRACE
+export TF_LOG_PATH="terraform.txt"

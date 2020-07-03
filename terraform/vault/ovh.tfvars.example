@@ -1,0 +1,10 @@
+# Variables Generals for all resources
+ssh_user      = ""
+public_key    = ""
+private_key   = ""
+# Variables for the OVH provider
+ovh_name_vps  = ""
+ovh_image_vps = ""
+# Variables for the OVH provider
+ovh_zone      = ""
+ovh_subdomain = ""

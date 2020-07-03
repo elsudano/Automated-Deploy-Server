@@ -1,0 +1,9 @@
+# Variables Generals for all resources
+ssh_user    = ""
+public_key  = ""
+private_key = ""
+# Variables for the VmWare Workstation provider
+vmws_frontend_name       = ""
+vmws_frontend_image      = ""
+vmws_frontend_processors = ""
+vmws_frontend_memory     = ""

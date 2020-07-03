@@ -19,7 +19,6 @@ DODIR = $(BASE_TERRAFORM)/04-do
 VMWDIR = $(BASE_TERRAFORM)/05-vmw
 OS = $(shell hostnamectl | grep "Operating System:" | awk -F\  '{ print $$3 }')
 ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
-TFVER = 0.12.8
 
 #-------------------------------------------------------#
 #    Public Functions                                   #
@@ -39,22 +38,36 @@ help:
 	| sort | awk 'BEGIN {FS = ":.*?## "}; \
 	{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+PHONY += all
+all:
+ifeq ($(ENVI),)
+	$(error ENVI is not set)
+else ifeq ($(ENVI),VMW)
+	$(eval TFVER := 0.13.0-beta2)
+	$(eval TERRAFORM_BIN := /usr/bin/terraform13)
+else
+	$(eval TFVER := 0.12.8)
+	$(eval TERRAFORM_BIN := /usr/bin/terraform12)
+endif
+	# @echo -e "Ver: $(TFVER)"
+	# @echo -e "Bin: $(TERRAFORM_BIN)"
+
 PHONY += prerequisites
-01_prerequisites: --$(OS) --$(ARCH) ## Prepare of environment and install programs needed for deploying
+01_prerequisites: all --$(OS) --$(ARCH) ## Prepare of environment and install programs needed for deploying
 	@unzip -q -o -d /tmp /tmp/terraform.zip
-	@sudo mv /tmp/terraform /usr/bin/
+	@sudo mv /tmp/terraform $(TERRAFORM_BIN)
 
 PHONY += bootstrap 
 02_bootstrap: --check_vault_file --requirements --setEnviVar --terraform_init ## Prepare environment for deploy automatically
 
 PHONY += deploy_check
-03_deploy_check: 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
+03_deploy_check: all 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
 PHONY += deploy_run
-04_deploy_run: 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
+04_deploy_run: all 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
 
 PHONY += dev_remove
-05_infra_remove: 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
+05_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
 
 06_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
@@ -135,13 +148,13 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
 --deploy_check: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform plan -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) plan -var-file="$(ENVIVARS)" $(ENVIDIR)
 
 --deploy_run: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform apply -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) apply -var-file="$(ENVIVARS)" $(ENVIDIR)
 
 --infra_remove: $(ENVIVARS)
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; terraform destroy -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) destroy -var-file="$(ENVIVARS)" $(ENVIDIR)
 
 --connect: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN)
@@ -158,8 +171,8 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/variables.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/outputs.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/backend.tf
-	@echo "terraform init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)"
-	@terraform init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
+	@echo "$(TERRAFORM_BIN) init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)"
+	@$(TERRAFORM_BIN) init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --upload: 
 	@git add .
@@ -171,7 +184,7 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@git pull --rebase
 
 --removeTerraform:
-	@sudo rm -f /usr/bin/terraform
+	@sudo rm -f $(TERRAFORM_BIN)
 
 --cleanFedora:
 	@sudo dnf remove wget.x86_64 unzip.x86_64 python3-fabric.noarch ansible.noarch -y

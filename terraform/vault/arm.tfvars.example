@@ -1,0 +1,20 @@
+# Variables Generals for all resources
+ssh_user    = ""
+public_key  = ""
+private_key = ""
+# Variables for the Azure provider
+arm_resource_group_name     = ""
+arm_resource_group_location = ""
+arm_vpc_name                = ""
+arm_cidr_vpc_network        = [""]
+arm_subnet_name             = ""
+arm_cidr_subnet_network     = [""]
+arm_nic_name                = ""
+arm_pip_name                = ""
+arm_name_instance           = ""
+arm_size_instance           = ""
+arm_config_os_disk          = ["", ""]
+arm_config_image            = ["", ""]
+# Variables for the OVH provider
+ovh_zone      = ""
+ovh_subdomain = ""
