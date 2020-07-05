@@ -47,7 +47,7 @@ else ifeq ($(ENVI),VMW)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform13)
 else
 	$(eval TFVER := 0.12.8)
-	$(eval TERRAFORM_BIN := /usr/bin/terraform12)
+	$(eval TERRAFORM_BIN := /usr/bin/terraform)
 endif
 	# @echo -e "Ver: $(TFVER)"
 	# @echo -e "Bin: $(TERRAFORM_BIN)"
@@ -57,23 +57,26 @@ PHONY += prerequisites
 	@unzip -q -o -d /tmp /tmp/terraform.zip
 	@sudo mv /tmp/terraform $(TERRAFORM_BIN)
 
-PHONY += bootstrap 
+PHONY += 02_bootstrap 
 02_bootstrap: --check_vault_file --requirements --setEnviVar --terraform_init ## Prepare environment for deploy automatically
 
-PHONY += deploy_check
+PHONY += 03_deploy_check
 03_deploy_check: all 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
-PHONY += deploy_run
+PHONY += 04_deploy_run
 04_deploy_run: all 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
 
-PHONY += dev_remove
+PHONY += 05_infra_remove
 05_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
 
-06_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
+06_create_graph: all --setEnviVar ## Generate a graph of the environment structure
+	@$(TERRAFORM_BIN) graph $(ENVIDIR) | dot -Tsvg > environment.svg
+
+07_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
 	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-07_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
+08_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 PHONY += upload
@@ -111,10 +114,12 @@ PHONY += poweroff
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
 	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
-18_soft_clean: 16_encrypt ## Clean the project, this only remove all Roles and temporary files, use with careful
+18_soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
 	@rm -fR .terraform/
 	@rm -f /tmp/terraform*
+	@rm -f terraform.txt
+	@rm -f environment.svg
 	@rm -fR ./*.backup
 
 PHONY += hard_clean
@@ -148,13 +153,13 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
 --deploy_check: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) plan -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) plan -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --deploy_run: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) apply -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) apply -auto-approve -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --infra_remove: $(ENVIVARS)
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) destroy -var-file="$(ENVIVARS)" $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) destroy -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --connect: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN)
