@@ -4,7 +4,7 @@ terraform {
   required_providers {
     vmworkstation = {
       source  = "elsudano/vmworkstation"
-      version = "0.1.0"
+      version = "0.1.7"
     }
   }
 }
@@ -12,9 +12,11 @@ terraform {
 # module "vmws" {
 #   source = "../../providers/vmws"
 # }
-resource "vmworkstation_vms" "test_machine" {
-  name       = var.vmws_reource_frontend_name
-  image      = var.vmws_reource_frontend_image
-  processors = var.vmws_reource_frontend_processors
-  memory     = var.vmws_reource_frontend_memory
+resource "vmworkstation_vm" "test_machine" {
+  sourceid     = var.vmws_reource_frontend_sourceid # The VM API need this parameter
+  denomination = var.vmws_reource_frontend_denomination
+  description  = var.vmws_reource_frontend_description
+  # image        = var.vmws_reource_frontend_image // maybe in the next version
+  processors   = var.vmws_reource_frontend_processors
+  memory       = var.vmws_reource_frontend_memory
 }

@@ -4,5 +4,5 @@ fabric/fabfile.py
 \.terraform
 *.tfstate
 *.tfstate.backup
-\terraform.txt
+\terraform.log
 \*.svg

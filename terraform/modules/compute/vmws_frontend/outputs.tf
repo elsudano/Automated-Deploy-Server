@@ -1,4 +1,4 @@
-# output name_test_machine {
-#   value       = vmworkstation_vms.test_machine
-#   description = "This is the first VM in VmWare Workstation Pro resources"
-# }
+output vmws_frontend_id {
+  value       = vmworkstation_vm.test_machine.id
+  description = "This is the id of the VM"
+}
