@@ -2,17 +2,19 @@ module "google" {
   source = "../../providers/google"
 }
 module "google_net" {
-  source               = "../../networking/google_net"
-  google_vpc_name      = var.google_vpc_name
-  google_firewall_name = var.google_firewall_name
+  source          = "../../networking/google_net"
+  storage_project = var.storage_project
+  vpc_name        = var.vpc_name
+  firewall_name   = var.firewall_name
 }
 resource "google_compute_instance" "google_frontend" {
-  name         = var.google_reource_frontend_name
-  machine_type = var.google_reource_frontend_machine_type
+  name         = var.reource_frontend_name
+  machine_type = var.reource_frontend_machine_type
   # Optionals attributes but utils for management  
   allow_stopping_for_update = "true"
   description               = "Instance frontend for Nextcloud"
-  deletion_protection       = "false"
+  deletion_protection       = var.delete_protection
+  project                   = var.storage_project
 
   boot_disk {
     initialize_params {
@@ -22,7 +24,7 @@ resource "google_compute_instance" "google_frontend" {
 
   network_interface {
     # network = "default"
-    network = module.google_net.google_vpc_link
+    network = module.google_net.vpc_link
     access_config {
     }
   }
