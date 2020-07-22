@@ -13,7 +13,7 @@
         image: linuxserver/mariadb
         recreate: yes
         restart: yes
-        restart_policy: on-failure
+        restart_policy: always
         state: started
         # healthcheck:
         #   # Check if nginx server is he"althy by curl'ing the server.
@@ -58,7 +58,7 @@
         image: linuxserver/nextcloud
         recreate: yes
         restart: yes
-        restart_policy: on-failure
+        restart_policy: always
         state: started
         # healthcheck:
         #   # Check if nginx server is healthy by curl'ing the server.
