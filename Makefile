@@ -33,7 +33,14 @@ help:
 	@echo -e "\t- ARM deploy Azure server"
 	@echo -e "\t- VMW deploy VmWare Workstation server"
 	@echo
-	@echo -e "Command: make ENVI=GCP 03_deploy_check"
+	@echo -e "Example commands:"
+	@echo -e "\t- make ENVI=GCP 04_deploy_check"
+	@echo -e "\t- make 09_ansible-run EXTRA=\"-l google -t mariadb\""
+	@echo
+	@echo -e "Useful commands:"
+	@echo -e "\t- Make a backup of production server: make 09_ansible-run EXTRA=\"-l ovh -t backup\""
+	@echo -e "\t- Update a production server: make 09_ansible-run EXTRA=\"-l ovh -t update\""
+	@echo
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| sort | awk 'BEGIN {FS = ":.*?## "}; \
 	{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -49,34 +56,37 @@ else
 	$(eval TFVER := 0.12.8)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform)
 endif
-	# @echo -e "Ver: $(TFVER)"
-	# @echo -e "Bin: $(TERRAFORM_BIN)"
+	@echo -e "Ver: $(TFVER)"
+	@echo -e "Bin: $(TERRAFORM_BIN)"
 
 PHONY += prerequisites
 01_prerequisites: all --$(OS) --$(ARCH) ## Prepare of environment and install programs needed for deploying
 	@unzip -q -o -d /tmp /tmp/terraform.zip
 	@sudo mv /tmp/terraform $(TERRAFORM_BIN)
 
-PHONY += 02_bootstrap 
-02_bootstrap: --check_vault_file --requirements --setEnviVar --terraform_init ## Prepare environment for deploy automatically
+PHONY += 02_cloud_prerequisites
+02_cloud_prerequisites: all 17_decrypt --cloud_bootstrap 16_encrypt ## Prepare project of Google to deploy de infrastructure
 
-PHONY += 03_deploy_check
-03_deploy_check: all 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
+PHONY += 03_bootstrap 
+03_bootstrap: all --check_vault_file --requirements --setEnviVar 17_decrypt --terraform_init 16_encrypt ## Prepare environment for deploy automatically
 
-PHONY += 04_deploy_run
-04_deploy_run: all 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
+PHONY += 04_deploy_check
+04_deploy_check: all 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
-PHONY += 05_infra_remove
-05_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
+PHONY += 05_deploy_run
+05_deploy_run: all 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
 
-06_create_graph: all --setEnviVar ## Generate a graph of the environment structure
+PHONY += 06_infra_remove
+06_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
+
+07_create_graph: all --setEnviVar ## Generate a graph of the environment structure
 	@$(TERRAFORM_BIN) graph $(ENVIDIR) | dot -Tsvg > environment.svg
 
-07_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
+08_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
 	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-08_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
+09_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 PHONY += upload
@@ -177,7 +187,8 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/outputs.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/backend.tf
 	@echo "$(TERRAFORM_BIN) init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)"
-	@$(TERRAFORM_BIN) init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
+	@$(TERRAFORM_BIN) init -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
+	# @$(TERRAFORM_BIN) init -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --upload: 
 	@git add .
@@ -196,6 +207,15 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 
 --cleanUbuntu:
 	@sudo apt remove wget unzip fabric ansible -y
+
+--cloud_bootstrap:
+ifneq ($(shell gcloud auth list --format='value(ACCOUNT)' | wc -l),0)
+	@gcloud auth revoke --all --quiet
+endif
+	@echo "Please authenticate in the correct project of GCP"
+	@gcloud auth login
+	@./custom-setup-sa.sh -o sudano.net -u manager@sudano.net -n terraform -b 01361D-FFCBF9-1720CD -s storage-helper-sudano-net
+	@mv terraform-base-sudano-net.json $(VAULT_TERRAFORM)
 
 --setEnviVar:
 ifeq ($(ENVI),)

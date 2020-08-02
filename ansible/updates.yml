@@ -1,0 +1,12 @@
+---
+- name: Update version of APP and DB for OVH Instance
+  hosts: 
+    - all
+
+  become_method: sudo
+  become_user: root
+  become: true
+
+  tasks: # the order of tasks it's important to the correct execution
+    - { name: Update version of MariaDB, include_tasks: "tasks/{{ ansible_distribution }}/update/mariadb.yml", tags: [ 'never', 'update' ]}
+    - { name: Update version of NextCloud, include_tasks: "tasks/{{ ansible_distribution }}/update/nextcloud.yml", tags: [ 'never', 'update' ]}

@@ -1,0 +1,57 @@
+---
+- name: Tasks for Update Nextcloud
+  tags: [ 'update' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
+
+    - name: Add tag old at the Nextcloud image
+      docker_image:
+        name: linuxserver/nextcloud:latest
+        repository: linuxserver/nextcloud:old
+        force_tag: yes
+        source: local
+      register: docker_tag_old_nextcloud
+
+    - name: Update Nextcloud version
+      docker_image:
+        name: linuxserver/nextcloud
+        state: present
+        force_source: yes
+        source: pull
+      when: docker_tag_old_nextcloud.changed
+
+    - name: Create a application container Nextcloud
+      docker_container:
+        name: "{{ nc_container_name }}"
+        image: linuxserver/nextcloud
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        env:
+          PUID: "{{ dk_uid_user }}"
+          PGID: "{{ dk_gid_user }}"
+          TZ: "Europe/London"
+        volumes:
+          - "{{ dk_config_folder }}:/config"
+          - "{{ dk_data_folder }}:/data"
+        networks_cli_compatible: yes
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ nc_nextcloud_host }}"
+        ports:
+          - 443:443
+      register: docker_start_nextcloud
+
+    # - name: Remove the old Nextcloud image
+    #   docker_image:
+    #     state: absent
+    #     name: linuxserver/nextcloud
+    #     tag: old
+    #     force_source: yes
+    #     source: local
+    #   register: docker_tag_old_remove
+    #   when: docker_start_nextcloud.changed

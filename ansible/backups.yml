@@ -8,5 +8,5 @@
   become: true
 
   tasks: # the order of tasks it's important to the correct execution
-    - { name: Update Version MariaDB, include_tasks: "tasks/{{ ansible_distribution }}/backup/mariadb.yml", tags: [ 'never', 'backup' ]}
-    - { name: Update Version NextCloud, include_tasks: "tasks/{{ ansible_distribution }}/backup/nextcloud.yml", tags: [ 'never', 'backup' ]}
+    - { name: Backup of MariaDB, include_tasks: "tasks/{{ ansible_distribution }}/backup/mariadb.yml", tags: [ 'never', 'backup' ]}
+    - { name: Backup of NextCloud, include_tasks: "tasks/{{ ansible_distribution }}/backup/nextcloud.yml", tags: [ 'never', 'backup' ]}

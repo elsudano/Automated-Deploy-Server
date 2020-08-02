@@ -80,6 +80,7 @@ mysql_container_name: mariadb
 mysql_db_host: "172.0.11.3"
 mysql_db_name: ncdb
 mysql_db_user: ncuser
+mysql_db_dump_folder: /usuario/files/DBbackups
 # mysql_db_pass: value in vault
 
 # Network Config

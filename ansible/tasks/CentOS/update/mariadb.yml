@@ -1,0 +1,59 @@
+---
+- name: Tasks for update version database of MariaDB
+  tags: [ 'update' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
+
+    - name: Add tag old at the MariaDB image
+      docker_image:
+        name: linuxserver/mariadb:latest
+        repository: linuxserver/mariadb:old
+        force_tag: yes
+        source: local
+      register: docker_tag_old_mariadb
+
+    - name: Update MariaDB version
+      docker_image:
+        name: linuxserver/mariadb
+        state: present
+        force_source: yes
+        source: pull
+      when: docker_tag_old_mariadb.changed
+
+    - name: Create a database container MariaDB
+      docker_container:
+        name: "{{ mysql_container_name }}"
+        image: linuxserver/mariadb
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        env:
+          PUID: "{{ dk_uid_user }}"
+          PGID: "{{ dk_gid_user }}"
+          TZ: "Europe/London"
+          MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
+          MYSQL_DATABASE: "{{ mysql_db_name }}"
+          MYSQL_USER: "{{ mysql_db_user }}"
+          MYSQL_PASSWORD: "{{ mysql_db_pass }}"
+          #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
+        volumes:
+          - "{{ dk_db_folder }}:/config"
+        networks_cli_compatible: yes
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ mysql_db_host }}"
+      register: docker_start_mariadb
+
+    # - name: Remove the old MariaDB image
+    #   docker_image:
+    #     state: absent
+    #     name: linuxserver/mariadb
+    #     tag: old
+    #     force_source: yes
+    #     source: local
+    #   register: docker_tag_old_remove
+    #   when: docker_start_mariadb.changed
