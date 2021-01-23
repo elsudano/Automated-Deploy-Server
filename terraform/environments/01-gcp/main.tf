@@ -1,14 +1,16 @@
 module "project-factory" {
   source  = "terraform-google-modules/project-factory/google"
-  version = "~> 8.0"
+  version = "~> 10.0"
 
   name                              = var.google_project_name
   org_id                            = var.google_organisation_id
   credentials_path                  = var.google_credentials_file
   billing_account                   = var.google_billing_account_id
   # folder_id                         = var.google_folder_id
-  use_tf_google_credentials_env_var = true
-  skip_gcloud_download              = true
+  bucket_name                       = var.google_tfstate_bucket_name
+  bucket_project                    = var.google_project_name
+  usage_bucket_name                 = var.google_tfstate_bucket_name
+  bucket_versioning                 = true
   random_project_id                 = false
   default_service_account           = "delete" # to delete the default service account
   lien                              = var.google_delete_protection # to prevent accidental deletion 

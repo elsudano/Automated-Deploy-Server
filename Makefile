@@ -3,12 +3,13 @@ SHELL = /bin/bash
 VAULT_ANSIBLE = ansible/vault
 VAULT_TERRAFORM = terraform/vault
 INVENTORY = ansible/inventory
-OVHVARS = $(VAULT_TERRAFORM)/ovh.tfvars
-GCPVARS = $(VAULT_TERRAFORM)/gcp.tfvars
-AWSVARS = $(VAULT_TERRAFORM)/aws.tfvars
-ARMVARS = $(VAULT_TERRAFORM)/arm.tfvars
-DOVARS = $(VAULT_TERRAFORM)/do.tfvars
-VMWVARS = $(VAULT_TERRAFORM)/vmw.tfvars
+VARS_DIR = ../../vault
+OVHVARS = $(VARS_DIR)/ovh.tfvars
+GCPVARS = $(VARS_DIR)/gcp.tfvars
+AWSVARS = $(VARS_DIR)/aws.tfvars
+ARMVARS = $(VARS_DIR)/arm.tfvars
+DOVARS = $(VARS_DIR)/do.tfvars
+VMWVARS = $(VARS_DIR)/vmw.tfvars
 PRIVATE_KEY = ~/.ssh/id_rsa_deploying
 EXTRA_SSH_COMMAND = -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 BASE_TERRAFORM = terraform/environments
@@ -36,7 +37,7 @@ help:
 	@echo
 	@echo -e "Example commands:"
 	@echo -e "\t- make ENVI=GCP 04_deploy_check"
-	@echo -e "\t- make ENVI=GCP 09_ansible-run EXTRA=\"-t mariadb\ -vvv""
+	@echo -e "\t- make ENVI=GCP 09_ansible-run EXTRA=\"-t mariadb -vvv\""
 	@echo
 	@echo -e "Useful commands:"
 	@echo -e "\t- Make a backup of production server: make ENVI=GCP 09_ansible-run EXTRA=\"-t backup\""
@@ -54,7 +55,7 @@ else ifeq ($(ENVI),VMW)
 	$(eval TFVER := 0.15.0)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform13)
 else
-	$(eval TFVER := 0.14.4)
+	$(eval TFVER := 0.14.5)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform)
 endif
 	@echo -e "Ver: $(TFVER)"
@@ -66,62 +67,64 @@ PHONY += prerequisites
 	@sudo mv /tmp/terraform $(TERRAFORM_BIN)
 
 PHONY += 02_cloud_prerequisites
-02_cloud_prerequisites: all 17_decrypt --cloud_bootstrap 16_encrypt ## Prepare project of Google to deploy de infrastructure
+02_cloud_prerequisites: all --decrypt --cloud_bootstrap --encrypt ## Prepare project of Google to deploy de infrastructure
 
 PHONY += 03_bootstrap 
-03_bootstrap: all --check_vault_file --requirements --setEnviVar 17_decrypt --terraform_init 16_encrypt ## Prepare environment for deploy automatically
+03_bootstrap: all --check_vault_file --requirements --setEnviVar --decrypt --terraform_init --encrypt ## Prepare environment for deploy automatically
 
 PHONY += 04_deploy_check
-04_deploy_check: all 17_decrypt --setEnviVar --deploy_check 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
+04_deploy_check: all --decrypt --setEnviVar --deploy_check --encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
-PHONY += 05_deploy_run
-05_deploy_run: all 17_decrypt --setEnviVar --deploy_run 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
+PHONY += 05_terraform_show
+05_terraform_show: all --decrypt --setEnviVar --terraform_show --encrypt ## Show the status of deploy with descriptions of the resources
 
-PHONY += 06_infra_remove
-06_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
+PHONY += 06_terraform_output
+06_terraform_output: all --decrypt --setEnviVar --terraform_outputs --encrypt ## Show the output that exist in the deployments
 
-PHONY += 07_create_graph
-07_create_graph: all 17_decrypt --setEnviVar --create_graph 16_encrypt ## Generate a graph of the environment structure
+PHONY += 07_terraform_list_resources
+07_terraform_list_resources: all --decrypt --setEnviVar --list_resources --encrypt ## List resources that were deploy, simple view to delete one of them
 
-08_ansible-check: --setEnviVar ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
+PHONY += 08_terraform_remove_resource
+08_terraform_remove_resource: all --decrypt --setEnviVar --remove_resources --encrypt ## Remove one resource of the list, user the follow var to set RESOURCE="resource to destroy"
+
+PHONY += 09_deploy_run
+09_deploy_run: all --decrypt --setEnviVar --deploy_run --encrypt ## Deploy new infrastructure for environment to setting in ENVI var
+
+PHONY += 10_infra_remove
+10_infra_remove: all --decrypt --setEnviVar --infra_remove --encrypt  ## Un-Deploy all infrestructure the environment of develop
+
+PHONY += 11_create_graph
+11_create_graph: all --decrypt --setEnviVar --create_graph --encrypt ## Generate a graph of the environment structure
+
+12_ansible_check: --setEnviVar ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)"
 	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
 
-09_ansible-run: --setEnviVar ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
+13_ansible_run: --setEnviVar ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
 
-PHONY += upload
-11_upload: 16_encrypt --upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
+PHONY += 14_upload
+14_upload: --encrypt --upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
-PHONY += download
-12_download: --download 17_decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
+PHONY += 15_download
+15_download: --download --decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
 
-PHONY += connect
-13_connect: 17_decrypt --connect 16_encrypt ## Connect to the remote instance with the key for deployment
+PHONY += 16_connect
+16_connect: --decrypt --connect --encrypt ## Connect to the remote instance with the key for deployment
 
-PHONY += poweron
-14_poweron: all 17_decrypt --setEnviVar --poweron --deploy_check 16_encrypt ## Power on the instance
+PHONY += 17_poweron
+17_poweron: all --decrypt --setEnviVar --poweron --deploy_check --encrypt ## Power on the instance
 
-PHONY += poweroff
-15_poweroff: 17_decrypt --setEnviVar --poweroff 16_encrypt ## Power off the instance
+PHONY += 18_poweroff
+18_poweroff: --decrypt --setEnviVar --poweroff --encrypt ## Power off the instance
 
-16_encrypt: ## Encrypt files for uploading to repository
-	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
-	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
-	@ansible-vault encrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
-	@ansible-vault encrypt ansible/group_vars/all/vault > /dev/null
-	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
-	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
+PHONY += 19_encrypt
+19_encrypt: --encrypt ## Encrypt files for uploading to repository
 
-17_decrypt: ## Decrypt files for working with them
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
-	@ansible-vault decrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
-	@ansible-vault decrypt ansible/group_vars/all/vault > /dev/null
-	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
-	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
+PHONY += 20_decrypt
+20_decrypt: --decrypt ## Decrypt files for working with them
 
-18_soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
+21_soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
 	@rm -fR .terraform/
 	@rm -f /tmp/terraform*
@@ -129,8 +132,8 @@ PHONY += poweroff
 	@rm -f environment.svg
 	@rm -fR ./*.backup
 
-PHONY += hard_clean
-19_hard_clean: 13_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
+PHONY += 22_hard_clean
+22_hard_clean: 21_soft_clean --removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
 #    Private Functions                                  #
@@ -164,17 +167,40 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
---deploy_check: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) plan -var-file=$(ENVIVARS) $(ENVIDIR)
+--deploy_check: --terraform_init --check_vault_file
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) plan -var-file=$(ENVIVARS)"
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) plan -var-file=$(ENVIVARS)
 
---deploy_run: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) apply -auto-approve -var-file=$(ENVIVARS) $(ENVIDIR)
+--deploy_run: --terraform_init --check_vault_file
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) apply -auto-approve -var-file=$(ENVIVARS)"
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) apply -auto-approve -var-file=$(ENVIVARS)
 
 --infra_remove: $(ENVIVARS)
-	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) destroy -var-file=$(ENVIVARS) $(ENVIDIR)
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) destroy -var-file=$(ENVIVARS)"
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) destroy -var-file=$(ENVIVARS)
+
+--terraform_show:
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) show"
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) show
+
+--terraform_outputs:
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) output"
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) output
+
+--list_resources:
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) show | grep \"#\""
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) show | grep "#"
+
+--remove_resources:
+	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) destroy -var-file=$(ENVIVARS) -target=$(RESOURCE)"
+ifeq ($(RESOURCE),)
+	@echo "Error: RESOURCE is not set, please select the resource to destroy from the terraform_list_resources "
+else
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) destroy -var-file=$(ENVIVARS) -target=$(RESOURCE)
+endif
 
 --create_graph: $(ENVIVARS)
-	@$(TERRAFORM_BIN) graph $(ENVIDIR) | dot -Tsvg > environment.svg
+	@$(TERRAFORM_BIN) -chdir=$(ENVIDIR) graph | dot -Tsvg > environment.svg
 
 --connect: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN)
@@ -185,17 +211,34 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 --poweroff: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(INVENTORY) | grep -A 1 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(shell cat $(INVENTORY) | grep -A 2 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') sudo shutdown -P +1
 
+--encrypt:
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault encrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
+	@ansible-vault encrypt ansible/group_vars/all/vault > /dev/null
+	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
+	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
+
+--decrypt:
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
+	@ansible-vault decrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
+	@ansible-vault decrypt ansible/group_vars/all/vault > /dev/null
+	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.tfvars > /dev/null
+	@ansible-vault decrypt $(VAULT_TERRAFORM)/*.json > /dev/null
+
 --check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/env_vars.sh ]; then echo "Please create and complete the $(VAULT_ANSIBLE)/env_vars_ovh.sh file with correct values inside"; fi;'
 
 --terraform_init: $(ENVIVARS)
+	@source $(VAULT_ANSIBLE)/env_vars.sh
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/main.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/variables.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/outputs.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/backend.tf
-	@echo "$(TERRAFORM_BIN) init -reconfigure -var-file=$(ENVIVARS) $(ENVIDIR)"
-	@$(TERRAFORM_BIN) init -reconfigure -var-file=$(ENVIVARS) $(ENVIDIR)
+	@echo "$(TERRAFORM_BIN) -chdir=$(ENVIDIR) init -reconfigure -var-file=$(ENVIVARS)"
+	@$(TERRAFORM_BIN) -chdir=$(ENVIDIR) init -reconfigure -var-file=$(ENVIVARS)
 
 
 --upload: 

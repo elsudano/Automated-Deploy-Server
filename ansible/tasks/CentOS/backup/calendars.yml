@@ -18,6 +18,7 @@
       owner: "{{ dk_name_user }}"
       group: "{{ dk_group_user }}"
       force_basic_auth: yes
+    no_log: true
     loop: "{{ calendars_of_user|flatten(levels=1) }}"
     loop_control:
       loop_var: calendar

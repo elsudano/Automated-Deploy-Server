@@ -1,4 +1,12 @@
+terraform {
+  required_providers {
+    ovh = {
+      source = "ovh/ovh"
+      version = "0.10.0"
+    }
+  }
+}
+
 provider "ovh" {
-  version  = "~> 0.8.0"
   endpoint = "ovh-eu"
 }

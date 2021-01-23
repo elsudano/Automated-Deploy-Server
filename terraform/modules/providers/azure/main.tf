@@ -1,7 +1,15 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "2.44.0"
+    }
+  }
+}
+
 # De momento este fichero no sirve por que el modulo
 # de terraform de azure no lo lee desde aquí
 provider "azurerm" {
-  version = "~>2.15.0"
   features {
     key_vault {
       recover_soft_deleted_key_vaults = true
