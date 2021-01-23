@@ -28,7 +28,7 @@
       register: nextcloud_installed
 
     - name: Initialize Nextcloud to use
-      raw: "{{ nc_occ_command }}  maintenance:install --database=mysql --database-host={{ mysql_db_host }} --database-name={{ mysql_db_name }} --database-user={{ mysql_db_user }} --database-pass={{ mysql_db_pass }} --database-table-prefix=nc_ --data-dir=/data --admin-user={{ nc_admin_user }} --admin-pass={{ nc_admin_pass }}"
+      raw: "{{ nc_occ_command }}  maintenance:install --database=mysql --database-host={{ mysql_db_host }} --database-name={{ mysql_db_name }} --database-user={{ mysql_db_user }} --database-pass={{ mysql_db_pass }} --data-dir=/data --admin-user={{ nc_admin_user }} --admin-pass={{ nc_admin_pass }}"
       when: "'installed: false' in nextcloud_installed.stdout"
 
     # - name: Add the subdomain at trusted domains
@@ -171,4 +171,5 @@
         name: nextcloud
         restart: yes
         state: started
+        container_default_behavior: no_defaults
       when: not ansible_check_mode

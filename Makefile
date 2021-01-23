@@ -2,6 +2,7 @@ SHELL = /bin/bash
 
 VAULT_ANSIBLE = ansible/vault
 VAULT_TERRAFORM = terraform/vault
+INVENTORY = ansible/inventory
 OVHVARS = $(VAULT_TERRAFORM)/ovh.tfvars
 GCPVARS = $(VAULT_TERRAFORM)/gcp.tfvars
 AWSVARS = $(VAULT_TERRAFORM)/aws.tfvars
@@ -35,11 +36,11 @@ help:
 	@echo
 	@echo -e "Example commands:"
 	@echo -e "\t- make ENVI=GCP 04_deploy_check"
-	@echo -e "\t- make 09_ansible-run EXTRA=\"-l google -t mariadb\""
+	@echo -e "\t- make ENVI=GCP 09_ansible-run EXTRA=\"-t mariadb\ -vvv""
 	@echo
 	@echo -e "Useful commands:"
-	@echo -e "\t- Make a backup of production server: make 09_ansible-run EXTRA=\"-l ovh -t backup\""
-	@echo -e "\t- Update a production server: make 09_ansible-run EXTRA=\"-l ovh -t update\""
+	@echo -e "\t- Make a backup of production server: make ENVI=GCP 09_ansible-run EXTRA=\"-t backup\""
+	@echo -e "\t- Update a production server: make ENVI=GCP 09_ansible-run EXTRA=\"-t update\""
 	@echo
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| sort | awk 'BEGIN {FS = ":.*?## "}; \
@@ -50,10 +51,10 @@ all:
 ifeq ($(ENVI),)
 	$(error ENVI is not set)
 else ifeq ($(ENVI),VMW)
-	$(eval TFVER := 0.13.0-beta2)
+	$(eval TFVER := 0.15.0)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform13)
 else
-	$(eval TFVER := 0.12.8)
+	$(eval TFVER := 0.14.4)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform)
 endif
 	@echo -e "Ver: $(TFVER)"
@@ -71,23 +72,23 @@ PHONY += 03_bootstrap
 03_bootstrap: all --check_vault_file --requirements --setEnviVar 17_decrypt --terraform_init 16_encrypt ## Prepare environment for deploy automatically
 
 PHONY += 04_deploy_check
-04_deploy_check: all 17_decrypt --setEnviVar --deploy_check --settingVars 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
+04_deploy_check: all 17_decrypt --setEnviVar --deploy_check 16_encrypt ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
 PHONY += 05_deploy_run
-05_deploy_run: all 17_decrypt --setEnviVar --deploy_run --settingVars 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
+05_deploy_run: all 17_decrypt --setEnviVar --deploy_run 16_encrypt ## Deploy new infrastructure for environment to setting in ENVI var
 
 PHONY += 06_infra_remove
 06_infra_remove: all 17_decrypt --setEnviVar --infra_remove 16_encrypt  ## Un-Deploy all infrestructure the environment of develop
 
-07_create_graph: all --setEnviVar ## Generate a graph of the environment structure
-	@$(TERRAFORM_BIN) graph $(ENVIDIR) | dot -Tsvg > environment.svg
+PHONY += 07_create_graph
+07_create_graph: all 17_decrypt --setEnviVar --create_graph 16_encrypt ## Generate a graph of the environment structure
 
-08_ansible-check: ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
-	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
-	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
+08_ansible-check: --setEnviVar ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
+	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)"
+	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
 
-09_ansible-run: ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
-	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
+09_ansible-run: --setEnviVar ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
+	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
 
 PHONY += upload
 11_upload: 16_encrypt --upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
@@ -98,16 +99,14 @@ PHONY += download
 PHONY += connect
 13_connect: 17_decrypt --connect 16_encrypt ## Connect to the remote instance with the key for deployment
 
-14_poweron: ## Power on the instance
-	@gcloud compute instances start $(INSTANCE)
+PHONY += poweron
+14_poweron: all 17_decrypt --setEnviVar --poweron --deploy_check 16_encrypt ## Power on the instance
 
 PHONY += poweroff
-15_poweroff: 17_decrypt --poweroff 16_encrypt ## Power off the instance
+15_poweroff: 17_decrypt --setEnviVar --poweroff 16_encrypt ## Power off the instance
 
 16_encrypt: ## Encrypt files for uploading to repository
-	# @ansible-vault encrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
-	# @ansible-vault encrypt $(VAULT_ANSIBLE)/*.json > /dev/null
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
 	@ansible-vault encrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
 	@ansible-vault encrypt ansible/group_vars/all/vault > /dev/null
@@ -115,9 +114,7 @@ PHONY += poweroff
 	@ansible-vault encrypt $(VAULT_TERRAFORM)/*.json > /dev/null
 
 17_decrypt: ## Decrypt files for working with them
-	# @ansible-vault decrypt $(VAULT_ANSIBLE)/*.yml > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.sh > /dev/null
-	# @ansible-vault decrypt $(VAULT_ANSIBLE)/*.json > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/*.ini > /dev/null
 	@ansible-vault decrypt $(VAULT_ANSIBLE)/.ovhapi > /dev/null
 	@ansible-vault decrypt ansible/group_vars/all/vault > /dev/null
@@ -147,11 +144,16 @@ baseurl=https://packages.microsoft.com/yumrepos/azure-cli\n\
 enabled=1\n\
 gpgcheck=1\n\
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-	@sudo dnf install -y azure-cli wget.x86_64 unzip.x86_64 python3-fabric.noarch python3-dnf.noarch ansible.noarch
+	@sudo dnf install -y google-cloud-sdk azure-cli wget.x86_64 unzip.x86_64 python3-fabric.noarch python3-dnf.noarch ansible.noarch
 
 --Ubuntu:
 	@sudo apt update -y
-	@sudo apt install -y wget unzip fabric ansible
+	@sudo apt install -y google-cloud-sdk wget unzip fabric ansible
+
+--Manjaro:
+	@sudo pacman -Syu --noconfirm community/yay
+	@yay
+	@yay -Syu --noconfirm aur/google-cloud-sdk community/jq extra/wget extra/graphviz extra/unzip fabric ansible
 
 --i386:
 	@wget -q -O /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TFVER}/terraform_${TFVER}_linux_386.zip
@@ -163,32 +165,38 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
 --deploy_check: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) plan -var-file=$(ENVIVARS) $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) plan -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --deploy_run: --terraform_init --check_vault_file 
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) apply -auto-approve -var-file=$(ENVIVARS) $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) apply -auto-approve -var-file=$(ENVIVARS) $(ENVIDIR)
 
 --infra_remove: $(ENVIVARS)
-	@source $(VAULT_ANSIBLE)/env_vars_ovh.sh; $(TERRAFORM_BIN) destroy -var-file=$(ENVIVARS) $(ENVIDIR)
+	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) destroy -var-file=$(ENVIVARS) $(ENVIDIR)
+
+--create_graph: $(ENVIVARS)
+	@$(TERRAFORM_BIN) graph $(ENVIDIR) | dot -Tsvg > environment.svg
 
 --connect: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN)
 
---poweroff: $(PRIVATE_KEY) $(ENVIVARS)
-	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN) sudo shutdown -P +1
+--poweron: $(PRIVATE_KEY)
+	@gcloud compute instances start $(shell cat $(INVENTORY) | grep -A 3 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }')
 
---check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars_ovh.sh
+--poweroff: $(PRIVATE_KEY) $(ENVIVARS)
+	@ssh -l $(shell cat $(INVENTORY) | grep -A 1 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(shell cat $(INVENTORY) | grep -A 2 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') sudo shutdown -P +1
+
+--check_vault_file: $(VAULT_ANSIBLE)/credentials.txt $(VAULT_ANSIBLE)/env_vars.sh
 	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/credentials.txt ]; then echo "Please create the $(VAULT_ANSIBLE)/credentials.txt file with the password inside"; fi;'
-	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/env_vars_ovh.sh ]; then echo "Please create and complete the $(VAULT_ANSIBLE)/env_vars_ovh.sh file with correct values inside"; fi;'
+	@bash -c 'if [ ! -s $(VAULT_ANSIBLE)/env_vars.sh ]; then echo "Please create and complete the $(VAULT_ANSIBLE)/env_vars_ovh.sh file with correct values inside"; fi;'
 
 --terraform_init: $(ENVIVARS)
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/main.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/variables.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/outputs.tf
 	@stat -c "%n %U %G %A %s" $(ENVIDIR)/backend.tf
-	@echo "$(TERRAFORM_BIN) init -reconfigure -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)"
-	@$(TERRAFORM_BIN) init -backend-config=$(ENVIDIR)/backend.tf -var-file=$(ENVIVARS) $(ENVIDIR)
-	# @$(TERRAFORM_BIN) init -var-file=$(ENVIVARS) $(ENVIDIR)
+	@echo "$(TERRAFORM_BIN) init -reconfigure -var-file=$(ENVIVARS) $(ENVIDIR)"
+	@$(TERRAFORM_BIN) init -reconfigure -var-file=$(ENVIVARS) $(ENVIDIR)
+
 
 --upload: 
 	@git add .
@@ -223,48 +231,27 @@ ifeq ($(ENVI),)
 else ifeq ($(ENVI),OVH)
 	$(eval ENVIDIR := $(OVHDIR))
 	$(eval ENVIVARS := $(OVHVARS))
+	$(eval HOSTANSI := ovh)
 else ifeq ($(ENVI),GCP)
 	$(eval ENVIDIR := $(GCPDIR))
 	$(eval ENVIVARS := $(GCPVARS))
+	$(eval HOSTANSI := google)
 else ifeq ($(ENVI),AWS)
 	$(eval ENVIDIR := $(AWSDIR))
 	$(eval ENVIVARS := $(AWSVARS))
+	$(eval HOSTANSI := aws)
 else ifeq ($(ENVI),ARM)
 	$(eval ENVIDIR := $(ARMDIR))
 	$(eval ENVIVARS := $(ARMVARS))
+	$(eval HOSTANSI := arm)
 else ifeq ($(ENVI),DO)
 	$(eval ENVIDIR := $(DODIR))
 	$(eval ENVIVARS := $(DOVARS))
+	$(eval HOSTANSI := do)
 else ifeq ($(ENVI),VMW)
 	$(eval ENVIDIR := $(VMWDIR))
 	$(eval ENVIVARS := $(VMWVARS))
-endif
-
---settingVars:
-ifeq ($(ENVI),OVH)
-	# $(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "digitalocean_droplet") | .instances[].attributes.ipv4_address' | tr -d \"))
-	# $(eval INSTANCE := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
-	$(eval DOMAIN := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
-else ifeq ($(ENVI),GCP)
-	# $(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \"))
-	# $(eval INSTANCE := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "google_compute_instance") | .instances[0].attributes.id' | tr -d \"))
-	$(eval DOMAIN := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
-else ifeq ($(ENVI),AWS)
-	# $(eval PUBLIC_IP := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "") | .instances[0].attributes.network_interface[0].access_config[0].nat_ip' | tr -d \"))
-	# $(eval INSTANCE := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "") | .instances[0].attributes.id' | tr -d \"))
-	$(eval DOMAIN := $(shell cat $(ENVIDIR)/terraform.tfstate | jq '.resources[] | select(.type == "ovh_domain_zone_record") | .instances[0].attributes.subdomain,.instances[0].attributes.zone' | tr -d \" | tr "\n" . | rev  | cut -c 2- | rev))
-else ifeq ($(ENVI),ARM)
-	# $(eval PUBLIC_IP := "localhost")
-	# $(eval INSTANCE := "")
-	$(eval DOMAIN := "")
-else ifeq ($(ENVI),DO)
-	# $(eval PUBLIC_IP := "localhost")
-	# $(eval INSTANCE := "")
-	$(eval DOMAIN := "")
-else ifeq ($(ENVI),VMW)
-	# $(eval PUBLIC_IP := "localhost")
-	# $(eval INSTANCE := "")
-	$(eval DOMAIN := "")
+	$(eval HOSTANSI := vmw)
 endif
 
 .PHONY = $(PHONY)

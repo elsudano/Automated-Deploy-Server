@@ -2,6 +2,7 @@ ansible/vault/credentials.txt
 \ansible/roles
 fabric/fabfile.py
 \.terraform
+*.lock.hcl
 *.tfstate
 *.tfstate.backup
 \terraform.log

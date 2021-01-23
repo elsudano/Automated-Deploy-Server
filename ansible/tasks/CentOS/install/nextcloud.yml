@@ -15,6 +15,7 @@
         restart: yes
         restart_policy: always
         state: started
+        container_default_behavior: no_defaults
         # healthcheck:
         #   # Check if nginx server is he"althy by curl'ing the server.
         #   # If this fails or timeouts, the healthcheck fails.
@@ -35,6 +36,7 @@
         volumes:
           - "{{ dk_db_folder }}:/config"
         networks_cli_compatible: yes
+        network_mode: default
         networks:
           - name: "{{ net_name_network }}"
             ipv4_address: "{{ mysql_db_host }}"
@@ -60,6 +62,7 @@
         restart: yes
         restart_policy: always
         state: started
+        container_default_behavior: no_defaults
         # healthcheck:
         #   # Check if nginx server is healthy by curl'ing the server.
         #   # If this fails or timeouts, the healthcheck fails.
@@ -76,6 +79,7 @@
           - "{{ dk_config_folder }}:/config"
           - "{{ dk_data_folder }}:/data"
         networks_cli_compatible: yes
+        network_mode: default
         networks:
           - name: "{{ net_name_network }}"
             ipv4_address: "{{ nc_nextcloud_host }}"
