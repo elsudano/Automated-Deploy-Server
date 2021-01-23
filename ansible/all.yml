@@ -67,7 +67,7 @@
         - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
 
     - name: Open requiered port in FirewallD
-      firewalld:
+      ansible.posix.firewalld:
         port: "{{ item }}"
         permanent: yes
         state: enabled
