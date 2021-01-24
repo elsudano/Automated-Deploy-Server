@@ -52,8 +52,8 @@ all:
 ifeq ($(ENVI),)
 	$(error ENVI is not set)
 else ifeq ($(ENVI),VMW)
-	$(eval TFVER := 0.15.0)
-	$(eval TERRAFORM_BIN := /usr/bin/terraform13)
+	$(eval TFVER := 0.15.0-alpha20210107)
+	$(eval TERRAFORM_BIN := /usr/bin/terraform-beta)
 else
 	$(eval TFVER := 0.14.5)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform)
