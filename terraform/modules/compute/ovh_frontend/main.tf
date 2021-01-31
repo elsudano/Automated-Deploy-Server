@@ -1,6 +1,6 @@
-module "ovh" {
-  source = "../../providers/ovh"
-}
+# module "ovh" {
+#   source = "../../providers/ovh"
+# }
 resource "ovh_me_ssh_key" "default" {
   name = "SSH Key"
   key  = file(var.public_key)

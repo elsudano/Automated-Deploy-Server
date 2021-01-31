@@ -1,6 +1,6 @@
-module "google" {
-  source = "../../providers/google"
-}
+# module "google" {
+#   source = "../../providers/google"
+# }
 resource "google_compute_network" "vpc" {
   project                 = var.storage_project
   name                    = var.vpc_name

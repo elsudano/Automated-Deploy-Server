@@ -1,6 +1,6 @@
-module "azure" {
-  source = "../../providers/azure"
-}
+# module "azure" {
+#   source = "../../providers/azure"
+# }
 resource "azurerm_virtual_network" "azure_vpc" {
   name                = var.arm_vpc_name
   address_space       = var.arm_cidr_vpc_network

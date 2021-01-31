@@ -1,6 +1,6 @@
-module "do" {
-  source        = "../../providers/do"
-}
+# module "do" {
+#   source        = "../../providers/do"
+# }
 resource "digitalocean_floating_ip" "public_ip" {
   region            = "lon1"
 }

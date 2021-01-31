@@ -1,6 +1,6 @@
-module "aws" {
-  source = "../../providers/aws"
-}
+# module "aws" {
+#   source = "../../providers/aws"
+# }
 resource "aws_vpc_dhcp_options" "aws_dhcp" {
   domain_name          = "eu-west-1.compute.internal"
   domain_name_servers  = ["8.8.8.8", "8.8.4.4", "127.0.0.1", "10.0.0.2"]

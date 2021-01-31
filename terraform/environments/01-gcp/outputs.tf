@@ -8,8 +8,8 @@ output "google_project_service_account_json" {
   sensitive   = true
   description = "The Service Account of the Project that's created"
 }
-output "ovh_subdomain" {
-  value       = module.ovh_domain.subdomain
-  sensitive   = false
-  description = "The subdomain that's created"
-}
+# output "ovh_subdomain" {
+#   value       = module.ovh_domain.subdomain
+#   sensitive   = false
+#   description = "The subdomain that's created"
+# }

@@ -37,6 +37,10 @@ variable "google_project_name" {
   description = "(Required) Name of the project in GCP "
   default     = "first"
 }
+variable "google_enable_api_list" {
+  type        = list(string)
+  description = "(Required) List of APIs to be activated in the project"
+}
 variable "google_tfstate_bucket_name" {
   type        = string
   description = "(Required) Name of the Bucket to storage the tfstate files for the project "

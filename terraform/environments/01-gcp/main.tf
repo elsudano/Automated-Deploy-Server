@@ -2,18 +2,19 @@ module "project-factory" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.0"
 
-  name                              = var.google_project_name
-  org_id                            = var.google_organisation_id
-  credentials_path                  = var.google_credentials_file
-  billing_account                   = var.google_billing_account_id
-  # folder_id                         = var.google_folder_id
-  bucket_name                       = var.google_tfstate_bucket_name
-  bucket_project                    = var.google_project_name
-  usage_bucket_name                 = var.google_tfstate_bucket_name
-  bucket_versioning                 = true
-  random_project_id                 = false
-  default_service_account           = "delete" # to delete the default service account
-  lien                              = var.google_delete_protection # to prevent accidental deletion 
+  name                    = var.google_project_name
+  org_id                  = var.google_organisation_id
+  credentials_path        = var.google_credentials_file
+  billing_account         = var.google_billing_account_id
+  # folder_id               = var.google_folder_id
+  activate_apis           = var.google_enable_api_list
+  bucket_name             = var.google_tfstate_bucket_name
+  bucket_project          = var.google_project_name
+  usage_bucket_name       = var.google_tfstate_bucket_name
+  bucket_versioning       = true
+  random_project_id       = false
+  default_service_account = "delete" # to delete the default service account
+  lien                    = var.google_delete_protection # to prevent accidental deletion 
 }
 module "google_frontend" {
   source = "../../modules/compute/google_frontend"
@@ -32,5 +33,5 @@ module "ovh_domain" {
   ovh_zone      = var.ovh_zone
   ovh_subdomain = var.ovh_subdomain
   # ovh_target    = module.do_net.public_ip
-  ovh_target = module.google_frontend.google_frontend_endpoint
+  ovh_target    = module.google_frontend.google_frontend_endpoint
 }

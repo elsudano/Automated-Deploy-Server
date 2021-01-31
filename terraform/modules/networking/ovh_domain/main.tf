@@ -1,6 +1,6 @@
-module "ovh" {
-  source                 = "../../providers/ovh"
-}
+# module "ovh" {
+#   source    = "../../providers/ovh"
+# }
 resource "ovh_domain_zone_record" "subdomain1" {
   zone      = var.ovh_zone
   subdomain = var.ovh_subdomain

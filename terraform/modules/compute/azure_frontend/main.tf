@@ -1,6 +1,6 @@
-module "azurerm" {
-  source = "../../providers/azure"
-}
+# module "azurerm" {
+#   source = "../../providers/azure"
+# }
 resource "azurerm_linux_virtual_machine" "azure_frontend" {
   name                = var.arm_name_instance
   resource_group_name = var.arm_resource_group_name

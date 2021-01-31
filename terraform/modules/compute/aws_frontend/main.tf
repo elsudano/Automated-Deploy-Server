@@ -1,6 +1,6 @@
-module "aws" {
-  source = "../../providers/aws"
-}
+# module "aws" {
+#   source = "../../providers/aws"
+# }
 module "aws_centos" {
   source = "../../amis/aws_centos"
 }
