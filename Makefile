@@ -52,10 +52,10 @@ all:
 ifeq ($(ENVI),)
 	$(error ENVI is not set)
 else ifeq ($(ENVI),VMW)
-	$(eval TFVER := 0.15.0-alpha20210107)
+	$(eval TFVER := 0.15.0)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform-beta)
 else
-	$(eval TFVER := 0.14.5)
+	$(eval TFVER := 0.15.0)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform)
 endif
 	@echo -e "Ver: $(TFVER)"
@@ -128,7 +128,7 @@ PHONY += 20_decrypt
 	@rm -fR ansible/roles/*
 	@rm -fR .terraform/
 	@rm -f /tmp/terraform*
-	@rm -f terraform.txt
+	@rm -f terraform.log
 	@rm -f environment.svg
 	@rm -fR ./*.backup
 
@@ -167,11 +167,11 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 --requirements: ansible/requirements.yml
 	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
 
---deploy_check: --terraform_init --check_vault_file
+--deploy_check: --check_vault_file
 	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) plan -var-file=$(ENVIVARS)"
 	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) plan -var-file=$(ENVIVARS)
 
---deploy_run: --terraform_init --check_vault_file
+--deploy_run: --check_vault_file
 	@echo "source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) apply -auto-approve -var-file=$(ENVIVARS)"
 	@source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(ENVIDIR) apply -auto-approve -var-file=$(ENVIVARS)
 

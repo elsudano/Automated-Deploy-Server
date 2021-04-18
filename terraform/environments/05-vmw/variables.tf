@@ -24,6 +24,10 @@ variable "vmws_frontend_description1" {
   type        = string
   description = "(Required) The Description at later maybe to explain the instance  "
 }
+variable "vmws_frontend_path1" {
+  type        = string
+  description = "(Required) The Path where will be our instance in VmWare"
+}
 variable "vmws_frontend_denomination2" {
   type        = string
   description = "(Required) The Name of VM in WS "
@@ -32,6 +36,10 @@ variable "vmws_frontend_denomination2" {
 variable "vmws_frontend_description2" {
   type        = string
   description = "(Required) The Description at later maybe to explain the instance  "
+}
+variable "vmws_frontend_path2" {
+  type        = string
+  description = "(Required) The Path where will be our instance in VmWare"
 }
 # variable "vmws_frontend_image" {
 #   type        = string

@@ -9,7 +9,11 @@ variable "vmws_reource_frontend_denomination" {
 }
 variable "vmws_reource_frontend_description" {
   type        = string
-  description = "(Required) The Description at later maybe to explain the instance  "
+  description = "(Required) The Description at later maybe to explain the instance "
+}
+variable "vmws_reource_frontend_path" {
+  type        = string
+  description = "(Required) The path where the instance is deployed "
 }
 # variable "vmws_reource_frontend_image" {
 #   type        = string

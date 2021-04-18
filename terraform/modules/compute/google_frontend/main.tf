@@ -1,6 +1,3 @@
-# module "google" {
-#   source = "../../providers/google"
-# }
 module "google_net" {
   source          = "../../networking/google_net"
   storage_project = var.storage_project
