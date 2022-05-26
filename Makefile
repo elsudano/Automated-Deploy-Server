@@ -26,12 +26,12 @@ help: ## Makefile Self-Documented, help target is the same that you view here
 	@echo -e "\t- VMW deploy VmWare Workstation server"
 	@echo
 	@echo -e "Example commands:"
-	@echo -e "\t- make ENVI=GCP 04_deploy_check"
-	@echo -e "\t- make ENVI=GCP 09_ansible-run EXTRA=\"-t mariadb -vvv\""
+	@echo -e "\t- make deploy_check"
+	@echo -e "\t- make ansible_run EXTRA=\"-t mariadb -vvv\""
 	@echo
 	@echo -e "Useful commands:"
-	@echo -e "\t- Make a backup of production server: make ENVI=GCP 09_ansible-run EXTRA=\"-t backup\""
-	@echo -e "\t- Update a production server: make ENVI=GCP 09_ansible-run EXTRA=\"-t update\""
+	@echo -e "\t- Make a backup of production server: make ansible_check EXTRA=\"-l ovh -t backup\""
+	@echo -e "\t- Update a production server: make ansible_check EXTRA=\"-t ovh -t update\""
 	@echo
 	@grep -oE '^[a-zA-Z0-9_-]+:.*?## .*$$|*+[%0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| awk 'BEGIN {FS = ":.*?## "}{printf "\033[36m%-30s\033[39m %s\n", $$1, $$2}' \
@@ -54,43 +54,43 @@ $(addprefix .tf-init-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) init -reconfigure
 
 .PHONY: $(addprefix tf-init-,$(TARGET))
-$(addprefix tf-init-,$(TARGET)):tf-init-%: all .decrypt-all .tf-init-$(TARGET) .encrypt-all ## We can Initializate the environment and prepare environment for deploy automatically
+$(addprefix tf-init-,$(TARGET)):tf-init-%: all .tf-init-$(TARGET) ## We can Initializate the environment and prepare environment for deploy automatically
 
 $(addprefix .tf-plan-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) plan
 
 .PHONY: $(addprefix tf-plan-,$(TARGET))
-$(addprefix tf-plan-,$(TARGET)):tf-plan-%: all .decrypt-all .tf-plan-$(TARGET) .encrypt-all ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
+$(addprefix tf-plan-,$(TARGET)):tf-plan-%: all .tf-plan-$(TARGET) ## Check the modify of deploy the new infrastructure for environment to setting in ENVI var 
 
 $(addprefix .tf-apply-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) apply -auto-approve 
 
 .PHONY: $(addprefix tf-apply-,$(TARGET))
-$(addprefix tf-apply-,$(TARGET)):tf-apply-%: all .decrypt-all .tf-apply-$(TARGET) .encrypt-all ## Deploy new infrastructure for environment to setting in ENVI var
+$(addprefix tf-apply-,$(TARGET)):tf-apply-%: all .tf-apply-$(TARGET) ## Deploy new infrastructure for environment to setting in ENVI var
 
 $(addprefix .tf-destroy-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) destroy
 
 .PHONY: $(addprefix tf-destroy-,$(TARGET))
-$(addprefix tf-destroy-,$(TARGET)):tf-destroy-%: all .decrypt-all .tf-destroy-$(TARGET) .encrypt-all ## Un-Deploy all infrestructure the environment of develop
+$(addprefix tf-destroy-,$(TARGET)):tf-destroy-%: all .tf-destroy-$(TARGET) ## Un-Deploy all infrestructure the environment of develop
 
 $(addprefix .tf-show-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) show
 
 .PHONY: $(addprefix tf-show-,$(TARGET))
-$(addprefix tf-show-,$(TARGET)):tf-show-%: all .decrypt-all .tf-show-$(TARGET) .encrypt-all ## Show the status of deploy with descriptions of the resources
+$(addprefix tf-show-,$(TARGET)):tf-show-%: all .tf-show-$(TARGET) ## Show the status of deploy with descriptions of the resources
 
 $(addprefix .tf-output-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) output
 
 .PHONY: $(addprefix tf-output-,$(TARGET))
-$(addprefix tf-output-,$(TARGET)):tf-output-%: all .decrypt-all .tf-output-$(TARGET) .encrypt-all ## Show the output that exist in the deployments
+$(addprefix tf-output-,$(TARGET)):tf-output-%: all .tf-output-$(TARGET) ## Show the output that exist in the deployments
 
 $(addprefix .tf-list-resources-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) show | grep "#"
 
 .PHONY: $(addprefix tf-list-resources-,$(TARGET))
-$(addprefix tf-list-resources-,$(TARGET)):tf-list-resources-%: all .decrypt-all .tf-list-resources-$(TARGET) .encrypt-all ## List resources that were deploy, simple view to delete one of them
+$(addprefix tf-list-resources-,$(TARGET)):tf-list-resources-%: all .tf-list-resources-$(TARGET) ## List resources that were deploy, simple view to delete one of them
 
 $(addprefix .tf-remove-resource-,$(TARGET)):
 ifeq ($(RESOURCE),)
@@ -100,7 +100,13 @@ else
 endif
 
 .PHONY: $(addprefix tf-remove-resource-,$(TARGET))
-$(addprefix tf-remove-resource-,$(TARGET)):tf-remove-resource-%: all .decrypt-all .tf-remove-resource-$(TARGET) .encrypt-all ## Remove one resource of the list, user the follow var to set RESOURCE="resource to destroy"
+$(addprefix tf-remove-resource-,$(TARGET)):tf-remove-resource-%: all .tf-remove-resource-$(TARGET) ## Remove one resource of the list, user the follow var to set RESOURCE="resource to destroy"
+
+$(addprefix .tf-create-graph-,$(TARGET)):
+	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) graph | dot -Tsvg > environment.svg
+
+.PHONY: $(addprefix tf-create-graph-,$(TARGET))
+$(addprefix tf-create-graph-,$(TARGET)):tf-create-graph-%: all .tf-create-graph-$(TARGET) ## Generate a graph of the environment structure
 
 endef
 
@@ -114,33 +120,30 @@ ifeq ($(VER),BETA)
 	@sudo mv /tmp/terraform $(TERRAFORM_BIN)
 endif
 
-.PHONY: 02_cloud_prerequisites
-02_cloud_prerequisites: all .decrypt .cloud_bootstrap .encrypt ## Prepare project of Google to deploy de infrastructure
+.PHONY: cloud_prerequisites
+cloud_prerequisites: all .decrypt .cloud_bootstrap .encrypt ## Prepare project of Google to deploy de infrastructure
 
-.PHONY: 11_create_graph
-11_create_graph: all .decrypt .setEnviVar .create_graph .encrypt ## Generate a graph of the environment structure
+ansible_check: ansible/root.yml # .requirements ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-l ovh -t backup -vvv"
+	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
+	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-12_ansible_check: .setEnviVar ansible/root.yml ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-vvv"
-	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)"
-	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
+ansible_run: ansible/root.yml # .requirements ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-l ovh -t backup -vvv"
+	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-13_ansible_run: .setEnviVar ansible/root.yml ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-vvv"
-	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory -l $(HOSTANSI) $(EXTRA)
+.PHONY: upload
+upload: .encrypt .upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
-.PHONY: 14_upload
-14_upload: .encrypt .upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
-
-.PHONY: 15_download
-15_download: .download .decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
+.PHONY: download
+download: .download .decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
 
 .PHONY: 16_connect
 16_connect: .decrypt .connect .encrypt ## Connect to the remote instance with the key for deployment
 
-.PHONY: 17_poweron
-17_poweron: all .decrypt .setEnviVar .poweron .deploy_check .encrypt ## Power on the instance
+#.PHONY: 17_poweron
+#17_poweron: all .decrypt .setEnviVar .poweron .deploy_check .encrypt # # Power on the instance
 
-.PHONY: 18_poweroff
-18_poweroff: .decrypt .setEnviVar .poweroff .encrypt ## Power off the instance
+#.PHONY: 18_poweroff
+#18_poweroff: .decrypt .setEnviVar .poweroff .encrypt # # Power off the instance
 
 .PHONY: encrypt
 encrypt: .encrypt-all ## Encrypt files for uploading to repository
@@ -189,19 +192,17 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azu
 	@wget -q -O /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TFVER}/terraform_${TFVER}_linux_amd64.zip
 
 .requirements: ansible/requirements.yml
-	@ansible-galaxy install -r ansible/requirements.yml -p ansible/roles/ --force
-
-.create_graph: $(ENVIVARS)
-	@$(TERRAFORM_BIN) -chdir=$(ENVIDIR) graph | dot -Tsvg > environment.svg
+	@ansible-galaxy role install -r ansible/requirements.yml -p ansible/roles/ --force
+	@ansible-galaxy collection install -r ansible/requirements.yml --force
 
 .connect: $(PRIVATE_KEY) $(ENVIVARS)
 	@ssh -l $(shell cat $(ENVIVARS) | grep "ssh_user" | awk -F\  '{ print $$3 }' | tr -d \") -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(DOMAIN)
 
-.poweron: $(PRIVATE_KEY)
-	@gcloud compute instances start $(shell cat $(INVENTORY) | grep -A 3 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }')
+# .poweron: $(PRIVATE_KEY)
+# 	@gcloud compute instances start $(shell cat $(INVENTORY) | grep -A 3 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }')
 
-.poweroff: $(PRIVATE_KEY) $(ENVIVARS)
-	@ssh -l $(shell cat $(INVENTORY) | grep -A 1 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(shell cat $(INVENTORY) | grep -A 2 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') sudo shutdown -P +1
+# .poweroff: $(PRIVATE_KEY) $(ENVIVARS)
+# 	@ssh -l $(shell cat $(INVENTORY) | grep -A 1 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') -i $(PRIVATE_KEY) $(EXTRA_SSH_COMMAND) $(shell cat $(INVENTORY) | grep -A 2 "$(HOSTANSI):var" | tail -1 | awk -F\= '{ print $$2 }') sudo shutdown -P +1
 
 .encrypt-all:
 	@ansible-vault encrypt $(TFVARS_FILES) > /dev/null
