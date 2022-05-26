@@ -123,11 +123,11 @@ endif
 .PHONY: cloud_prerequisites
 cloud_prerequisites: all .decrypt .cloud_bootstrap .encrypt ## Prepare project of Google to deploy de infrastructure
 
-ansible_check: ansible/root.yml # .requirements ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-l ovh -t backup -vvv"
+ansible_check: ansible/root.yml .requirements ## Verify all task for in the servers but not apply configuration, extra vars supported EXTRA="-l ovh -t backup -vvv"
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
 	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-ansible_run: ansible/root.yml # .requirements ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-l ovh -t backup -vvv"
+ansible_run: ansible/root.yml .requirements ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-l ovh -t backup -vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 .PHONY: upload
