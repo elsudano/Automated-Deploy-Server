@@ -1,0 +1,29 @@
+- name: Restart SSH
+  systemd:
+    name: sshd
+    state: restarted
+
+- name: Restart Nginx
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: Restart MySQL
+  systemd:
+    name: mariadb
+    state: restarted
+
+- name: Restart Firewalld
+  systemd:
+    name: firewalld
+    state: restarted
+
+- name: Stop Webmin
+  service:
+    name: webmin
+    state: stopped
+
+- name: Restart Webmin
+  systemd:
+    name: webmin
+    state: restarted
