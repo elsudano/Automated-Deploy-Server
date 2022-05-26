@@ -4,5 +4,39 @@
   block:
     - name: Setting the correct interpreter of python 
       set_fact:
-        ansible_python_interpreter: "/usr/bin/python3"
+        ansible_python_interpreter: "/usr/bin/python"
       tags: always
+
+    - name: Permit traffic in default zone for services
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+      notify: "Restart Firewalld"
+      with_items: "{{ fw_open_services }}"
+
+    - name: Block traffic in default zone for others service
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: disabled
+      notify: "Restart Firewalld"
+      with_items: "{{ fw_closed_services }}"
+
+    - name: Open requiered port in FirewallD
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+      notify: "Restart Firewalld"
+      with_items: "{{ fw_open_ports }}"
+
+    - name: Close unnecessary ports in FirewallD
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: disabled
+      notify: "Restart Firewalld"
+      with_items: "{{ fw_closed_ports }}"
+
+

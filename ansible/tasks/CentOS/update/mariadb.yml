@@ -25,7 +25,7 @@
 
     - name: Create a database container MariaDB
       docker_container:
-        name: "{{ mysql_container_name }}"
+        name: "{{ database_container_name }}"
         image: linuxserver/mariadb
         recreate: yes
         restart: yes

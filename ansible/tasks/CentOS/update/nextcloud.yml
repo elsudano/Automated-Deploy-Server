@@ -9,15 +9,15 @@
 
     - name: Add tag old at the Nextcloud image
       docker_image:
-        name: linuxserver/nextcloud:latest
-        repository: linuxserver/nextcloud:old
+        name: nextcloud:latest
+        repository: nextcloud:old
         force_tag: yes
         source: local
       register: docker_tag_old_nextcloud
 
     - name: Update Nextcloud version
       docker_image:
-        name: linuxserver/nextcloud
+        name: nextcloud:latest
         state: present
         force_source: yes
         source: pull
@@ -25,8 +25,8 @@
 
     - name: Create a application container Nextcloud
       docker_container:
-        name: "{{ nc_container_name }}"
-        image: linuxserver/nextcloud
+        name: "{{ application_container_name }}"
+        image: nextcloud
         recreate: yes
         restart: yes
         restart_policy: always
@@ -49,7 +49,7 @@
     # - name: Remove the old Nextcloud image
     #   docker_image:
     #     state: absent
-    #     name: linuxserver/nextcloud
+    #     name: nextcloud
     #     tag: old
     #     force_source: yes
     #     source: local

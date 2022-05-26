@@ -1,53 +1,18 @@
-[all:children]
+[all]
 aws
 azure
 digital_ocean
 google
 ovh
 
-[aws]
-aws
+aws ansible_ssh_user=centos ansible_host=awsnc.sudano.net short_host=server
 
-[aws:vars]
-ansible_ssh_user=centos
-ansible_host=awsnc.sudano.net
-short_host=server
+azure ansible_ssh_user=centos ansible_host=aznc.sudano.net short_host=server
 
-[azure]
-azure
+digital_ocean ansible_ssh_user=centos ansible_host=donc.sudano.net short_host=server
 
-[azure:vars]
-ansible_ssh_user=centos
-ansible_host=aznc.sudano.net
-short_host=server
+google ansible_ssh_user=centos ansible_host=mync.sudano.net short_host=server
 
-[digital_ocean]
-digital_ocean
+ovh ansible_ssh_user=root ansible_host=nc.sudano.net short_host=server
 
-[digital_ocean:vars]
-ansible_ssh_user=centos
-ansible_host=donc.sudano.net
-short_host=server
-
-[google]
-google
-
-[google:vars]
-ansible_ssh_user=centos
-ansible_host=mync.sudano.net
-short_host=server
-
-[ovh]
-ovh
-
-[ovh:vars]
-ansible_ssh_user=root
-ansible_host=nc.sudano.net
-short_host=server
-
-[test]
-test
-
-[test:vars]
-ansible_host=0.0.0.0/0
-short_host=test
+test ansible_host=0.0.0.0/0 short_host=test

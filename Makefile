@@ -127,7 +127,7 @@ ansible_check: ansible/root.yml .requirements ## Verify all task for in the serv
 	@echo "ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)"
 	@ansible-playbook ansible/root.yml --diff --check --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
-ansible_run: ansible/root.yml .requirements ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-l ovh -t backup -vvv"
+ansible_run: ansible/root.yml #.requirements ## Run all task necessary for the correct functionality, extra vars supported EXTRA="-l ovh -t backup -vvv"
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 .PHONY: upload

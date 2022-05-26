@@ -2,6 +2,15 @@
 gn_file_pub_rsa_pro: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 gn_file_pub_rsa_dev: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}" 
 
+# Common Tasks
+all_folders:
+  - "{{ dk_config_folder }}"
+  - "{{ dk_wserver_folder }}"
+  - "{{ dk_app_folder }}"
+  - "{{ dk_db_folder }}"
+  - "{{ dk_data_folder }}"
+  - "{{ pt_data_folder }}"
+
 # Docker Tasks
 dk_name_user: usuario
 dk_group_user: usuarios
@@ -11,19 +20,33 @@ dk_domain: "sudano.net"
 # this value it's override in the playbooks of instances
 #dk_nc_subdomain: "nc.{{ dk_domain }}" 
 dk_config_folder: /{{ dk_name_user }}
-dk_app_folder: "{{ dk_config_folder }}/www"
-dk_db_folder: "/ncBD"
-dk_data_folder: "/ncData"
+dk_wserver_folder: "{{ dk_config_folder }}/nginx"
+dk_app_folder: "{{ dk_config_folder }}/apps"
+dk_db_folder: "{{ dk_config_folder }}/ncBD"
+dk_data_folder: "{{ dk_config_folder }}/ncData"
 
 # Portainer vars
 pt_container_name: portainer
-pt_data_folder: "/ptData"
+pt_data_folder: "{{ dk_config_folder }}/ptData"
 pt_host: "172.0.11.4"
 
 # Firewalls variables
-fw_ports:
-  - 22/tcp
-  - 443/tcp
+fw_open_services:
+  - http
+  - https
+  - ssh
+
+fw_closed_services:
+  - http
+  - https
+
+fw_open_ports:
+  - 8000/tcp
+  - 9000/tcp
+  - 9090/tcp
+  - 10000/tcp
+
+fw_closed_ports:
   - 8000/tcp
   - 9000/tcp
   - 9090/tcp
@@ -33,10 +56,65 @@ fw_ports:
 le_email: pepitogrillo148@hotmail.com
 # le_debug: false
 
+# MySQL Database
+database_container_name: mariadb
+mysql_db_host: "172.0.11.3"
+mysql_db_name: ncdb
+mysql_db_user: ncuser
+mysql_db_dump_folder: "{{ dk_config_folder }}/files/DBbackups"
+mysql_enablerepo:
+  - "epel"
+mysql_enabled_on_startup: true
+mysql_user_home: "{{ dk_db_folder }}"
+mysql_user_name: "{{ dk_name_user }}"
+# mysql_user_password: value in vault
+# mysql_db_pass: value in vault
+
+# Nginx WebServer
+webserver_container_name: nginx
+nx_name_user: nginx
+nx_group_user: nginx
+nx_uid_user: "1015"
+nx_gid_user: "1015"
+# Nginx Role
+nginx_logrotate_conf_enable: false
+nginx_logrotate_conf:
+  paths:
+    - "/var/log/nginx/*.log"
+  options:
+    - daily
+    - missingok
+    - rotate 14
+    - compress
+    - delaycompress
+    - notifempty
+    - create 0644 {{ nx_name_user }} {{ nx_group_user }}  # Changes nginx logs permissions
+    - sharedscripts
+
+# Network Config
+net_name_network: "nextcloud"
+net_cidr: 172.0.11.0/16
+net_gateway_ip: 172.0.11.1
+net_subnet_range: 172.0.11.0/28
+
+# Pip Role
+pip_package: python3-pip
+pip_install_packages: [ docker, docker-compose ]
+
+# PHP Role
+php_version: '7.3'
+php_enable_php_fpm: false
+php_webserver_daemon: 'nginx'
+php_enablerepo: 
+  - epel
+
+# Docker Role
+docker_users: [ root, usuario ]
+
 # Nextcloud Tasks
-nc_container_name: nextcloud
+application_container_name: nextcloud
 nc_admin_user: admin
-nc_occ_command: "docker exec -it {{ nc_container_name }} sudo -u abc /usr/bin/php /config/www/nextcloud/occ"
+nc_occ_command: "docker exec -it {{ application_container_name }} sudo -u abc /usr/bin/php /config/www/nextcloud/occ"
 # The follow var it's in value
 # nc_admin_pass:
 nc_nextcloud_host: "172.0.11.2"
@@ -74,25 +152,3 @@ nc_disable_apps:
   - survey_client
   - systemtags
   - user_ldap
-
-# MySQL Database
-mysql_container_name: mariadb
-mysql_db_host: "172.0.11.3"
-mysql_db_name: ncdb
-mysql_db_user: ncuser
-mysql_db_dump_folder: /usuario/files/DBbackups
-# mysql_db_pass: value in vault
-
-# Network Config
-net_name_network: "nextcloud"
-net_cidr: 172.0.11.0/16
-net_gateway_ip: 172.0.11.1
-net_subnet_range: 172.0.11.0/28
-
-# Pip Role
-pip_package: python3-pip
-pip_install_packages: [ docker, docker-compose ]
-
-# Docker Role
-docker_users: [ root, usuario ]
-php_version: '7.3'

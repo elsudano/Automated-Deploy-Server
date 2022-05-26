@@ -44,7 +44,7 @@
 
     - name: Install dependencies for all playbooks
       package:
-        name: [ 'firewalld', 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
+        name: [ 'python-firewall.noarch', 'firewalld', 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
         state: present
       tags: always
       when: not ansible_check_mode
@@ -65,13 +65,6 @@
       with_items:
         - { key: net.ipv6.conf.all.disable_ipv6, value: 1 }
         - { key: net.ipv6.conf.default.disable_ipv6, value: 1 }
-
-    - name: Open requiered port in FirewallD
-      ansible.posix.firewalld:
-        port: "{{ item }}"
-        permanent: yes
-        state: enabled
-      with_items: "{{ fw_ports }}"
 
     - name: Disable and stop the firewalld service
       service:
@@ -94,18 +87,12 @@
         line: "{{ item.line }}"
         state: present
       register: change_ssh_config
+      notify: "Restart SSH"
       with_items:
         - { regex: '^PermitRootLogin no', line: 'PermitRootLogin yes' }
         - { regex: '^X11Forwarding yes',line: 'X11Forwarding no' }
         - { regex: '^HostKey /etc/ssh/ssh_host_ecdsa_key',line: '#HostKey /etc/ssh/ssh_host_ecdsa_key' }
         - { regex: '^HostKey /etc/ssh/ssh_host_ed25519_key',line: '#HostKey /etc/ssh/ssh_host_ed25519_key' }
-
-    - name: Reload and restart service SSHd
-      systemd:
-        name: sshd
-        state: restarted
-        enabled: yes
-      when: change_ssh_config is changed
 
     - name: Set both authorized key to root user
       authorized_key:
@@ -149,3 +136,11 @@
         create: yes
         line: "{{ dk_name_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: 'visudo -cf %s'
+
+    - name: Create all the folders that we need
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ dk_name_user }}"
+        group: "{{ dk_group_user }}"
+      with_items: "{{ all_folders }}"

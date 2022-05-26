@@ -1,5 +1,5 @@
 ---
-- name: Apply base configuration for Google instance
+- name: Apply base configuration for All instances
   hosts: 
     - all
   
@@ -9,14 +9,22 @@
 
   roles:
     - { role: geerlingguy.repo-epel, become: yes, tags: [ 'epel' ], when: ansible_os_family == 'RedHat' }
-    - { role: geerlingguy.pip, tags: [ 'pip', 'nextcloud', 'portainer' ], when: ansible_os_family == 'RedHat' }
-    - { role: geerlingguy.docker, check_mode: no, tags: [ 'nextcloud', 'portainer' ] }
+    - { role: custom_roles/elsudano.handlers, become: yes, tags: [ 'always' ], when: ansible_os_family == 'RedHat' }
+    - { role: nginxinc.nginx, become: yes, tags: [ 'nginx' ], when: ansible_os_family == 'RedHat' }
+    - { role: geerlingguy.php, become: yes, tags: [ 'nginx' ], when: ansible_os_family == 'RedHat' }
+    - { role: geerlingguy.php-mysql, become: yes, tags: [ 'nginx' ], when: ansible_os_family == 'RedHat' }
+    - { role: dev-sec.nginx-hardening, become: yes, tags: [ 'nginx' ], when: ansible_os_family == 'RedHat' }
+    - { role: geerlingguy.mysql, become: yes, tags: [ 'mysql' ], when: ansible_os_family == 'RedHat' }
+    - { role: dev-sec.mysql-hardening, become: yes, tags: [ 'mysql' ], when: ansible_os_family == 'RedHat' }
+    # - { role: geerlingguy.pip, tags: [ 'pip', 'nextcloud', 'portainer' ], when: ansible_os_family == 'RedHat' }
+    # - { role: geerlingguy.docker, check_mode: no, tags: [ 'nextcloud', 'portainer' ] }
 
   tasks: # the order of tasks it's important to the correct execution
-    - { name: FirewallD Configuration, include_tasks: "tasks/{{ ansible_distribution }}/config/firewalld.yml", tags: [ 'firewall' ]}       
-    - { name: Docker network installation, include_tasks: "tasks/{{ ansible_distribution }}/install/network.yml", tags: [ 'nextcloud', 'portainer' ] }
+    - { name: FirewallD Configuration, include_tasks: "tasks/{{ ansible_distribution }}/config/firewalld.yml", tags: [ 'firewall' ]}
+    # - { name: Docker network installation, include_tasks: "tasks/{{ ansible_distribution }}/install/network.yml", tags: [ 'nextcloud', 'portainer' ] }
     - { name: Webmin Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/webmin.yml", tags: [ 'webmin' ] }
-    - { name: Nextcloud Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/nextcloud.yml", tags: [ 'nextcloud' ] }
+    # - { name: Nextcloud Installation, include_tasks: "tasks/{{ ansible_distribution }}/install/nextcloud.yml", tags: [ 'nextcloud' ] }
+    - { name: Nginx Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/nginx.yml", tags: [ 'nginx' ] }
     - { name: LetsEncrypt Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/letsencrypt.yml", tags: [ 'letsencrypt' ] }
-    - { name: Nextcloud Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/nextcloud.yml", tags: [ 'nextcloud' ] }
+    # - { name: Nextcloud Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/nextcloud.yml", tags: [ 'nextcloud' ] }
     - { name: Webmin Settings, include_tasks: "tasks/{{ ansible_distribution }}/config/webmin.yml", tags: [ 'webmin' ] }

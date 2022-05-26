@@ -9,8 +9,8 @@
 
     - name: Create a database container MariaDB
       docker_container:
-        name: "{{ mysql_container_name }}"
-        image: linuxserver/mariadb
+        name: "{{ database_container_name }}"
+        image: mariadb:latest
         recreate: yes
         restart: yes
         restart_policy: always
@@ -56,8 +56,8 @@
 
     - name: Create a application container Nextcloud
       docker_container:
-        name: "{{ nc_container_name }}"
-        image: linuxserver/nextcloud
+        name: "{{ application_container_name }}"
+        image: nextcloud:production-fpm-alpine
         recreate: yes
         restart: yes
         restart_policy: always
@@ -76,7 +76,7 @@
           PGID: "{{ dk_gid_user }}"
           TZ: "Europe/London"
         volumes:
-          - "{{ dk_config_folder }}:/config"
+          - "{{ dk_app_folder }}:/config"
           - "{{ dk_data_folder }}:/data"
         networks_cli_compatible: yes
         network_mode: default
@@ -85,57 +85,23 @@
             ipv4_address: "{{ nc_nextcloud_host }}"
             # links: 
             #   - db_test:db
-        ports:
-          - 443:443
       when: not ansible_check_mode
 
-    # - name: Create all containers of the Nextcloud application
-    #   docker_compose:
-    #     project_name: nextcloud
-    #     definition:
-    #       version: "2"
-    #       services:
-    #         nextcloud:
-    #           image: linuxserver/nextcloud
-    #           container_name: nextcloud
-    #           environment:
-    #             - PUID={{ dk_uid_user }}
-    #             - PGID={{ dk_gid_user }}
-    #             - TZ=Europe/London
-    #           volumes:
-    #             - "{{ dk_config_folder }}:/config"
-    #             - "{{ dk_data_folder }}:/data"
-    #           networks:
-    #               default:
-    #                   ipv4_address: "{{ nc_nextcloud_host }}"
-    #           ports:
-    #             - 443:443
-    #           restart: unless-stopped
-
-    #         db:
-    #           image: linuxserver/mariadb
-    #           container_name: mariadb
-    #           environment:
-    #             - PUID={{ dk_uid_user }}
-    #             - PGID={{ dk_gid_user }}
-    #             - TZ=Europe/London
-    #             - MYSQL_ROOT_PASSWORD={{ mysql_root_pass }}
-    #             - MYSQL_DATABASE={{ mysql_db_name }}
-    #             - MYSQL_USER={{ mysql_db_user }}
-    #             - MYSQL_PASSWORD={{ mysql_db_pass }}
-    #             #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
-    #           volumes:
-    #             - "{{ dk_db_folder }}:/config"
-    #           networks:
-    #               default:
-    #                   ipv4_address: "{{ mysql_db_host }}"
-    #           # ports:
-    #           #   - 3306:3306
-    #           restart: unless-stopped
-    #     networks:
-    #       default:
-    #         ipam:
-    #           driver: default
-    #           config:
-    #           - subnet: "{{ net_subnet_range }}"
-    #   register: output
+    - name: Create a Web Server container with Nginx
+      docker_container:
+        name: "{{ webserver_container_name }}"
+        image: nginx:alpine
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        container_default_behavior: no_defaults
+        volumes:
+        - "{{ dk_wserver_folder }}:/etc/nginx"
+        ports:
+        - "80:80"
+        - "443:443"
+        env:
+          NGINX_HOST: "sudano.net"
+          NGINX_PORT: "443"
+      when: not ansible_check_mode

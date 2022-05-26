@@ -32,14 +32,8 @@
           - { line: keyfile=/etc/letsencrypt/live/sudano.net/privkey.pem }
           - { line: certfile=/etc/letsencrypt/live/sudano.net/cert.pem }
           - { line: ssl=1 }
-
+      notify: "Restart Webmin"
       when: "'webmin' in ansible_facts.packages"
-
-    - name: Restart Webmin service
-      systemd:
-        name: webmin
-        state: restarted
-        enabled: yes
 
     - name: Apply configuration for Custom commands
       debug:

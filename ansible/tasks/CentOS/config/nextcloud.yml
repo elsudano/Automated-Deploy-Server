@@ -115,7 +115,7 @@
       register: nc_exist_users
 
     - name: Create Users of App Nextcloud
-      raw: "docker exec -it {{ nc_container_name }} sudo -u abc OC_PASS={{ item.pass }} /usr/bin/php /config/www/nextcloud/occ  user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}"
+      raw: "docker exec -it {{ application_container_name }} sudo -u abc OC_PASS={{ item.pass }} /usr/bin/php /config/www/nextcloud/occ  user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}"
       when: "'{{ item.id }}' not in nc_exist_users.stdout"
       with_items: "{{ nc_app_users }}"
       no_log: true

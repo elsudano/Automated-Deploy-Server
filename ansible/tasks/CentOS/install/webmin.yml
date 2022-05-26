@@ -10,15 +10,12 @@
         name: firewalld
         state: started
 
-    - name: Add webmin rpm-key
-      rpm_key:
-        key: http://www.webmin.com/jcameron-key.asc
-        state: present
-
     - name: Add webmin yum repository
       yum_repository:
         baseurl: 'https://download.webmin.com/download/yum'
         state: present
+        gpgcheck: true
+        gpgkey: http://www.webmin.com/jcameron-key.asc
         name: webmin
         description: Webmin Yum Repo
 
@@ -32,6 +29,9 @@
       package:
         name: webmin
         state: present
+      notify: 
+        - "Stop Webmin"
+        - "Restart Webmin"
       when: not ansible_check_mode
 
     - name: Stop and disable a old Webmin service
@@ -44,10 +44,3 @@
         enabled: no
         force: yes
         daemon_reload: yes
-
-    - name: Start and enable a new Webmin service
-      systemd:
-        name: webmin
-        state: restarted
-        daemon_reload: yes
-        enabled: yes

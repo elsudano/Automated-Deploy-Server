@@ -14,7 +14,6 @@ variable "private_key" {
 variable "list_of_vms" {
   type = map(object({
     sourceid     = string
-    denomination = string
     description  = string
     path         = string
     processors   = string
@@ -24,7 +23,6 @@ variable "list_of_vms" {
   default = {
     "key" = {
       sourceid     = null
-      denomination = null
       description  = null
       path         = null
       processors   = "1"
