@@ -1,36 +1,40 @@
 ---
+collections:
+  - name: jgoutin.home
+    version: "2.0.1"
 roles:
-  - src: geerlingguy.repo-epel
-    version: "3.1.0"
+  - name: geerlingguy.repo-epel
+    version: "3.1.1"
 
-  - src: geerlingguy.firewall
+  - name: geerlingguy.firewall
     version: "2.5.0"
 
-  - src: geerlingguy.ansible
+  - name: geerlingguy.ansible
     version: "2.1.0"
 
-  - src: geerlingguy.pip
-    version: "2.1.0"
-  
-  - src: geerlingguy.php
-    version: "4.8.0"
+  - name: geerlingguy.pip
+    version: "2.2.0"
 
-  - src: geerlingguy.php-mysql
+  - name: geerlingguy.repo-remi
+    version: "2.0.1"
+
+  # - name: geerlingguy.php
+  #   version: "4.8.0"
+    
+  - name: geerlingguy.php-versions
+    version: "5.0.0"
+
+  - name: geerlingguy.php-mysql
     version: "2.1.0"
+
+  - name: geerlingguy.nginx
+    version: "3.1.3"
   
-  - src: geerlingguy.docker
+  - name: geerlingguy.certbot
+    version: "5.0.1"
+  
+  - name: geerlingguy.docker
     version: "2.7.0"
 
-  - src: nginxinc.nginx
-    version: "0.23.1"
-
-  - src: dev-sec.nginx-hardening
-    version: "2.1.0"
-  
-  - src: geerlingguy.mysql
-    version: "3.5.0"
-
-  - src: dev-sec.mysql-hardening
-    version: "2.1.0"
-
-  - src: semuadmin.webmin
+  - name: geerlingguy.mysql
+    version: "4.1.0"
