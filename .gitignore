@@ -8,3 +8,4 @@ fabric/fabfile.py
 *.json
 \terraform.log
 \*.svg
+\test.php
