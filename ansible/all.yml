@@ -7,11 +7,58 @@
   become: true
 
   pre_tasks:
-    - name: Clean all yum data
-      command: yum clean all
-      args:
-        warn: false
+    - name: Clean all yum cache
+      yum:
+        clean: yes
       tags: always
+      when: not ansible_check_mode and ansible_os_family == 'RedHat'
+
+    - name: Clean all apt cache
+      apt:
+        purge: yes
+      tags: always
+      when: not ansible_check_mode and ansible_os_family == 'Debian'
+
+    - name: Install dependencies for all playbooks in ReadHat
+      package:
+        name: "{{ item }}"
+        state: present
+      tags: always
+      when: not ansible_check_mode and ansible_os_family == 'RedHat'
+      with_items:
+        - python-firewall.noarch
+        - firewalld
+        - python2-pip.noarch
+        - python3-pip.noarch
+        - python2-certbot-dns-ovh.noarch
+        - libselinux-python.x86_64
+        - net-tools
+
+    - name: Install dependencies for all playbooks in Debian
+      package:
+        name: "{{ item }}"
+        state: present
+      tags: always
+      when: not ansible_check_mode and ansible_os_family == 'Debian'
+      with_items:
+        - selinux-basics
+        - selinux-policy-default
+        - python3-firewall
+        - firewalld
+        # - python3-pip
+        - python3-certbot-dns-ovh
+        - python3-certbot-nginx
+        - python3-selinux
+        - net-tools
+
+    - name: Remove unused packages in Debian
+      package:
+        name: "{{ item }}"
+        state: absent
+      tags: always
+      when: not ansible_check_mode and ansible_os_family == 'Debian'
+      with_items:
+        - snapd
 
     - name: Disable SELinux
       selinux:
@@ -41,21 +88,15 @@
         state: present
       tags: always
       when: not ansible_check_mode and ansible_distribution == 'CentOS'
-
-    - name: Install dependencies for all playbooks
-      package:
-        name: [ 'python-firewall.noarch', 'firewalld', 'python2-pip.noarch', 'python3-pip.noarch', 'python2-certbot-dns-ovh.noarch', 'libselinux-python.x86_64']
-        state: present
-      tags: always
-      when: not ansible_check_mode
-
-  tasks:
+  
     - name: Upgrade all packages
-      yum:
+      tags: always
+      package:
         name: '*'
         state: latest
 
-    - name: Disable IPv& for all interfaces
+    - name: Disable IPv6 for all interfaces
+      tags: always
       sysctl:
         name: "{{ item.key }}"
         value: "{{ item.value }}"
@@ -75,19 +116,21 @@
       tags: [ 'never', 'debug' ]
 
     - name: Change a root password
+      tags: always
       user:
         name: root
         update_password: always
         password: "{{ root_password | password_hash('sha512') }}"
 
     - name: Change configuration of SSH daemon to root permit remote login with key
+      tags: always
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "{{ item.regex }}"
         line: "{{ item.line }}"
         state: present
       register: change_ssh_config
-      notify: "Restart SSH"
+      # notify: "Restart SSH"
       with_items:
         - { regex: '^PermitRootLogin no', line: 'PermitRootLogin yes' }
         - { regex: '^X11Forwarding yes',line: 'X11Forwarding no' }
@@ -95,6 +138,7 @@
         - { regex: '^HostKey /etc/ssh/ssh_host_ed25519_key',line: '#HostKey /etc/ssh/ssh_host_ed25519_key' }
 
     - name: Set both authorized key to root user
+      tags: always
       authorized_key:
         user: root
         state: present
@@ -103,44 +147,63 @@
         - "{{ gn_file_pub_rsa_dev }}"
         - "{{ gn_file_pub_rsa_pro }}"
 
-    - name: Ensure group {{ dk_group_user }} exists
+    - name: Ensure that the users groups exist
+      tags: always
       group:
-        name: "{{ dk_group_user }}"
-        gid: "{{ dk_gid_user }}"
+        name: "{{ item.group }}"
+        gid: "{{ item.gid }}"
         state: present
+      with_items:
+        - "{{ gn_users }}"
 
-    - name: Create a user by default
+    - name: Create a users in the system
+      tags: always
       user:
-        name: "{{ dk_name_user }}"
-        uid: "{{ dk_uid_user }}"
-        group: "{{ dk_group_user }}"
+        name: "{{ item.name }}"
+        uid: "{{ item.uid }}"
+        group: "{{ item.group }}"
         password: "{{ user_password | password_hash('sha512') }}"
-        home: "{{ dk_config_folder }}"
+        home: "{{ item.home }}"
         create_home: yes
-        comment: Usuario genérico
+        comment: "{{ item.comment }}"
         shell: /bin/bash
         update_password: always
       when: not ansible_check_mode
+      with_items:
+        - "{{ gn_users }}"
 
-    - name: Set authorized key taken from file
+    - name: Copy the OVH config file to instance
+      tags: always
+      copy:
+        src: vault/ovh.ini
+        dest: "{{ default_config_folder }}/ovh.ini"
+        owner: "{{ default_name_user }}"
+        mode: "0600"
+      no_log: true
+
+    - name: Set authorized key taken from file for {{ default_name_user }}
+      tags: always
       authorized_key:
-        user: "{{ dk_name_user }}"
+        user: "{{ default_name_user }}"
         state: present
         key: "{{ gn_file_pub_rsa_pro }}"
       when: not ansible_check_mode
 
-    - name: Allow {{ dk_name_user }} to have passwordless sudo
+    - name: Allow {{ default_name_user }} to have passwordless sudo
+      tags: always
       lineinfile:
-        dest: /etc/sudoers.d/{{ dk_name_user }}
+        dest: /etc/sudoers.d/{{ default_name_user }}
         state: present
         create: yes
-        line: "{{ dk_name_user }} ALL=(ALL) NOPASSWD: ALL"
+        line: "{{ default_name_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: 'visudo -cf %s'
 
     - name: Create all the folders that we need
+      tags: always
       file:
         path: "{{ item }}"
         state: directory
-        owner: "{{ dk_name_user }}"
-        group: "{{ dk_group_user }}"
+        owner: "{{ default_name_user }}"
+        group: "{{ default_group_user }}"
+        mode: 0775
       with_items: "{{ all_folders }}"
