@@ -3,7 +3,7 @@
   block:
     - name: Clean all files of application # Warning don't use in production
       user:
-        name: "{{ dk_name_user }}"
+        name: "{{ default_name_user }}"
         remove: yes
         force: yes
         state: absent

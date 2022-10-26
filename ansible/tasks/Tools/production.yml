@@ -14,9 +14,9 @@
         state: present
         key: "{{ gn_file_pub_rsa_pro }}"
 
-    - name: Set authorized key taken from file for "{{ dk_name_user }}"
+    - name: Set authorized key taken from file for "{{ default_name_user }}"
       authorized_key:
-        user: "{{ dk_name_user }}"
+        user: "{{ default_name_user }}"
         state: present
         key: "{{ gn_file_pub_rsa_pro }}"
 
@@ -26,12 +26,12 @@
       register: letsencrypt_cert
 
     - name: Generate new certificate if one doesn't exist.
-      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
       when: letsencrypt_cert.stat.exists == false and le_debug == false
 
     - name: Enable HTTP Strict Transport Security to Nextcloud
       lineinfile:
-        path: "{{ dk_config_folder }}/nginx/site-confs/default"
+        path: "{{ default_config_folder }}/nginx/site-confs/default"
         regexp: "{{ item.regex }}"
         line: "{{ item.line }}"
         state: present

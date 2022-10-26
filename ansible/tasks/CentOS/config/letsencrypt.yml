@@ -8,22 +8,22 @@
 
     - name: Check if config folder already exists.
       stat:
-        path: "{{ dk_config_folder }}"
+        path: "{{ default_config_folder }}"
       register: config_dir
 
-    - name: If don't exist {{ dk_config_folder }} directory, I create
+    - name: If don't exist {{ default_config_folder }} directory, I create
       file:
-        path: "{{ dk_config_folder }}"
+        path: "{{ default_config_folder }}"
         state: directory
-        owner: "{{ dk_name_user }}"
-        group: "{{ dk_group_user }}"
+        owner: "{{ default_name_user }}"
+        group: "{{ default_group_user }}"
         mode: "0750"
       when: not config_dir.stat.exists
 
     - name: Copy the OVH config file to instance
       copy:
         src: vault/ovh.ini
-        dest: "{{ dk_config_folder }}/ovh.ini"
+        dest: "{{ default_config_folder }}/ovh.ini"
         owner: root
         mode: "0600"
 
@@ -33,9 +33,9 @@
       register: letsencrypt_cert
 
     - name: Generate new certificate if one doesn't exist.
-      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
       when: not letsencrypt_cert.stat.exists and not le_debug
 
     - name: Check the dry-run of generate certificate
-      shell: "certbot-2 certonly --dry-run --dns-ovh --dns-ovh-credentials {{ dk_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      shell: "certbot-2 certonly --dry-run --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
       when: not letsencrypt_cert.stat.exists and le_debug

@@ -25,8 +25,8 @@
         #   retries: 3
         #   start_period: 30s
         env:
-          PUID: "{{ dk_uid_user }}"
-          PGID: "{{ dk_gid_user }}"
+          PUID: "{{ default_uid_user }}"
+          PGID: "{{ default_gid_user }}"
           TZ: "Europe/London"
           MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
           MYSQL_DATABASE: "{{ mysql_db_name }}"
@@ -72,8 +72,8 @@
         #   retries: 3
         #   start_period: 30s
         env:
-          PUID: "{{ dk_uid_user }}"
-          PGID: "{{ dk_gid_user }}"
+          PUID: "{{ default_uid_user }}"
+          PGID: "{{ default_gid_user }}"
           TZ: "Europe/London"
         volumes:
           - "{{ dk_app_folder }}:/config"

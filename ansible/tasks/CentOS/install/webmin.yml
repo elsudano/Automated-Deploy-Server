@@ -21,7 +21,7 @@
 
     - name: Install Webmin dependencies
       package:
-        name: ['perl-Authen-PAM', 'perl-Net-SSLeay', 'openssl', 'perl-IO-Tty', 'perl-Encode-Detect', 'python36-PyMySQL', 'mariadb', 'mariadb-server', 'mariadb-devel', 'perl']
+        name: ['perl-HTML-Parser','perl-Authen-PAM', 'perl-Net-SSLeay', 'openssl', 'perl-IO-Tty', 'perl-Encode-Detect', 'python36-PyMySQL', 'mariadb', 'mariadb-server', 'mariadb-devel', 'perl']
         state: present
         update_cache: true
 
@@ -37,10 +37,13 @@
     - name: Stop and disable a old Webmin service
       shell: "service webmin stop"
 
-    - name: Disable the old Webmin service
+    - name: Enable the new Webmin service
       service: # when I use the module service, webmin service don't be stop
         name: webmin
         state: restarted
-        enabled: no
+        enabled: yes
         force: yes
         daemon_reload: yes
+      notify:
+        - "Stop Webmin"
+        - "Restart Webmin"

@@ -19,8 +19,8 @@
         owner: root
         mode: "0600"
       with_items:
-        - { src: "/etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem", dst: "{{ dk_config_folder }}/keys/cert.crt" }
-        - { src: "/etc/letsencrypt/live/{{ dk_domain }}/privkey.pem", dst: "{{ dk_config_folder }}/keys/cert.key" }
+        - { src: "/etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem", dst: "{{ default_config_folder }}/keys/cert.crt" }
+        - { src: "/etc/letsencrypt/live/{{ dk_domain }}/privkey.pem", dst: "{{ default_config_folder }}/keys/cert.key" }
       when: [ letsencrypt_cert_src.stat.exists == true ]
 
     - name: Check if the nextcloud it's installed
@@ -81,7 +81,7 @@
 
     - name: Setting the correct trusted domain in config file
       lineinfile:
-        path: "{{ dk_config_folder }}/www/nextcloud/config/config.php"
+        path: "{{ default_config_folder }}/www/nextcloud/config/config.php"
         regexp: "    0 => 'localhost',"
         line: "    0 => '{{ dk_nc_subdomain }}',"
         state: present

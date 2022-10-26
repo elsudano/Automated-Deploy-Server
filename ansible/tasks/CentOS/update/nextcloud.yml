@@ -32,11 +32,11 @@
         restart_policy: always
         state: started
         env:
-          PUID: "{{ dk_uid_user }}"
-          PGID: "{{ dk_gid_user }}"
+          PUID: "{{ default_uid_user }}"
+          PGID: "{{ default_gid_user }}"
           TZ: "Europe/London"
         volumes:
-          - "{{ dk_config_folder }}:/config"
+          - "{{ default_config_folder }}:/config"
           - "{{ dk_data_folder }}:/data"
         networks_cli_compatible: yes
         networks:

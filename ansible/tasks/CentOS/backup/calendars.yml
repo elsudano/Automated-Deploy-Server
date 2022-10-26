@@ -15,8 +15,8 @@
       url_username: "{{ item.item.id }}"
       url_password: "{{ item.item.pass }}"
       dest: "{{ dk_data_folder }}/{{ item.item.id }}/files/{{ item.item.name }}-{{ ansible_date_time.date }}-calendar-{{ calendar }}.ics"
-      owner: "{{ dk_name_user }}"
-      group: "{{ dk_group_user }}"
+      owner: "{{ default_name_user }}"
+      group: "{{ default_group_user }}"
       force_basic_auth: yes
     no_log: true
     loop: "{{ calendars_of_user|flatten(levels=1) }}"
