@@ -1,0 +1,37 @@
+---
+- name: Tasks for install Portainer
+  tags: [ 'portainer' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
+
+    - name: Create a docker image with Portainer
+      docker_container:
+        name: "{{ pt_container_name }}"
+        image: portainer/portainer
+        command: -H unix:///var/run/docker.sock
+        recreate: yes
+        restart: yes
+        restart_policy: on-failure
+        state: started
+        # healthcheck:
+        #   # Check if nginx server is he"althy by curl'ing the server.
+        #   # If this fails or timeouts, the healthcheck fails.
+        #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+        #   interval: 1m30s
+        #   timeout: 10s
+        #   retries: 3
+        #   start_period: 30s
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - "{{ pt_data_folder }}:/data"
+        networks_cli_compatible: yes
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ pt_host }}"
+        ports:
+          - 9000:9000
+          - 8000:8000
+      when: not ansible_check_mode

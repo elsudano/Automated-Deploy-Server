@@ -1,0 +1,34 @@
+---
+- name: Tasks for install NextCloud
+  tags: [ 'nextcloud' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+    
+    - name: Install all the PHP requirements to NextCloud works properly
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - '{{ nc_php_list_prerequisities }}'
+
+    - name: Unarchive the NextCloud file
+      unarchive:
+        src: "{{ nc_version_url_package }}"
+        dest: "{{ dk_wserver_folder }}"
+        remote_src: true
+    
+    - name: "Set the correct user and group in the NextCloud folder ( {{ dk_wserver_folder }}/nextcloud )."
+      file:
+        path: "{{ dk_wserver_folder }}/nextcloud"
+        state: directory
+        owner: "{{ nx_name_user }}"
+        group: "{{ nx_group_user }}"
+        recurse: true
+
+    - name: "Set the correct permissions in the NextCloud folder ( {{ dk_wserver_folder }}/nextcloud )."
+      file:
+        path: "{{ dk_wserver_folder }}/nextcloud"
+        state: directory
+        mode: 0775

@@ -1,0 +1,21 @@
+---
+- name: Tasks for backup database of MariaDB
+  tags: [ 'backup' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
+
+    - name: Backup of database to Nextcloud
+      mysql_db:
+        login_host: "{{ mysql_db_host }}"
+        login_user: "{{ mysql_db_user }}"
+        login_password: "{{ mysql_db_pass }}"
+        name: "{{ mysql_db_name }}"
+        state: dump
+        target: "{{ dk_data_folder }}{{ mysql_db_dump_folder }}/database-dump-{{ ansible_date_time.date }}.sql"
+
+    - name: Refresh data of folders to users
+      raw: "{{ nc_occ_command }} files:scan --home-only --quiet {{ item.id }}"
+      with_items: "{{ nc_app_users }}"

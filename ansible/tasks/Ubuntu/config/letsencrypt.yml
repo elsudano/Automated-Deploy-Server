@@ -1,0 +1,41 @@
+- name: Tasks for config LetsEncrypt
+  tags: [ 'letsencrypt' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python"
+      tags: always
+
+    - name: Check if config folder already exists.
+      stat:
+        path: "{{ default_config_folder }}"
+      register: config_dir
+
+    - name: If don't exist {{ default_config_folder }} directory, I create
+      file:
+        path: "{{ default_config_folder }}"
+        state: directory
+        owner: "{{ default_name_user }}"
+        group: "{{ default_group_user }}"
+        mode: "0750"
+      when: not config_dir.stat.exists
+
+    - name: Copy the OVH config file to instance
+      copy:
+        src: vault/ovh.ini
+        dest: "{{ default_config_folder }}/ovh.ini"
+        owner: root
+        mode: "0600"
+
+    - name: Check if certificate already exists.
+      stat:
+        path: /etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem
+      register: letsencrypt_cert
+
+    - name: Generate new certificate if one doesn't exist.
+      shell: "certbot-2 certonly --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      when: not letsencrypt_cert.stat.exists and not le_debug
+
+    - name: Check the dry-run of generate certificate
+      shell: "certbot-2 certonly --dry-run --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --non-interactive --agree-tos --email {{ le_email }} -d *.{{ dk_domain }} -d {{ dk_domain }}"
+      when: not letsencrypt_cert.stat.exists and le_debug

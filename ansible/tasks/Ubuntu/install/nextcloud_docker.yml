@@ -1,0 +1,107 @@
+---
+- name: Tasks for install NextCloud
+  tags: [ 'nextcloud' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      tags: always
+
+    - name: Create a database container MariaDB
+      docker_container:
+        name: "{{ database_container_name }}"
+        image: mariadb:latest
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        container_default_behavior: no_defaults
+        # healthcheck:
+        #   # Check if nginx server is he"althy by curl'ing the server.
+        #   # If this fails or timeouts, the healthcheck fails.
+        #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+        #   interval: 1m30s
+        #   timeout: 10s
+        #   retries: 3
+        #   start_period: 30s
+        env:
+          PUID: "{{ default_uid_user }}"
+          PGID: "{{ default_gid_user }}"
+          TZ: "Europe/London"
+          MYSQL_ROOT_PASSWORD: "{{ mysql_root_pass }}"
+          MYSQL_DATABASE: "{{ mysql_db_name }}"
+          MYSQL_USER: "{{ mysql_db_user }}"
+          MYSQL_PASSWORD: "{{ mysql_db_pass }}"
+          #REMOTE_SQL: http://URL1/your.sql,https://URL2/your.sql #optional
+        volumes:
+          - "{{ dk_db_folder }}:/config"
+        networks_cli_compatible: yes
+        network_mode: default
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ mysql_db_host }}"
+            # links: 
+            #   - db_test:db
+        # ports:
+        #   - 3306:3306
+      when: not ansible_check_mode        
+
+    - name: Iptables flush filter
+      iptables:
+        chain: "{{ item }}"
+        flush: yes
+      register: flush_iptables
+      when: ansible_hostname == 'digital_ocean'
+      with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
+
+    - name: Create a application container Nextcloud
+      docker_container:
+        name: "{{ application_container_name }}"
+        image: nextcloud:production-fpm-alpine
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        container_default_behavior: no_defaults
+        # healthcheck:
+        #   # Check if nginx server is healthy by curl'ing the server.
+        #   # If this fails or timeouts, the healthcheck fails.
+        #   test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+        #   interval: 1m30s
+        #   timeout: 10s
+        #   retries: 3
+        #   start_period: 30s
+        env:
+          PUID: "{{ default_uid_user }}"
+          PGID: "{{ default_gid_user }}"
+          TZ: "Europe/London"
+        volumes:
+          - "{{ dk_app_folder }}:/config"
+          - "{{ dk_data_folder }}:/data"
+        networks_cli_compatible: yes
+        network_mode: default
+        networks:
+          - name: "{{ net_name_network }}"
+            ipv4_address: "{{ nc_nextcloud_host }}"
+            # links: 
+            #   - db_test:db
+      when: not ansible_check_mode
+
+    - name: Create a Web Server container with Nginx
+      docker_container:
+        name: "{{ webserver_container_name }}"
+        image: nginx:alpine
+        recreate: yes
+        restart: yes
+        restart_policy: always
+        state: started
+        container_default_behavior: no_defaults
+        volumes:
+        - "{{ dk_wserver_folder }}:/etc/nginx"
+        ports:
+        - "80:80"
+        - "443:443"
+        env:
+          NGINX_HOST: "sudano.net"
+          NGINX_PORT: "443"
+      when: not ansible_check_mode

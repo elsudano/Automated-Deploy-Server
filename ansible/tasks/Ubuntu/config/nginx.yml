@@ -6,18 +6,36 @@
         ansible_python_interpreter: "/usr/bin/python3"
       tags: always
 
+    - name: Check if WebServer root folder already exists.
+      stat:
+        path: "{{ dk_wserver_folder }}"
+      register: root_dir
+
+    - name: "Set the correct permissions in the WebServer folders ( {{ dk_wserver_folder }} )."
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ nx_name_user }}"
+        group: "{{ nx_group_user }}"
+        mode: "0775"
+      when: root_dir.stat.exists
+      with_items:
+        - "{{ dk_wserver_folder }}"
+        - "{{ dk_data_folder }}"
+        - "{{ dk_app_folder }}"
+
     - name: Check if config folder already exists.
       stat:
         path: "{{ nx_enabled_folder }}"
       register: config_dir
 
-    - name: If don't exist {{ nx_enabled_folder }} directory, I create
+    - name: If don't exist {{ nx_enabled_folder }} directory, I create it
       file:
         path: "{{ nx_enabled_folder }}"
         state: directory
         owner: "{{ nx_name_user }}"
         group: "{{ nx_group_user }}"
-        mode: "0750"
+        mode: "0770"
       when: not config_dir.stat.exists
 
     # - name: Apply Nginx template
@@ -48,7 +66,7 @@
         - test.php
         - favicon.ico
         - 404.gif
-        - 404.html
+        - 400.html
         - 500.gif
         - 500.html
 

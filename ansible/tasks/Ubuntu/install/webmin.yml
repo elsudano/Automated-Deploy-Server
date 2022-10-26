@@ -1,0 +1,54 @@
+- name: Tasks for install Webmin
+  tags: [ 'webmin' ]
+  block:
+    - name: Setting the correct interpreter of python 
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+
+    - name: Started Firewalld to the instalation of Webmin
+      service:
+        name: firewalld
+        state: started
+
+    - name: Add an Apt signing key for Webmin
+      apt_key:
+        url: http://www.webmin.com/jcameron-key.asc
+        state: present
+
+    - name: Add webmin yum repository
+      apt_repository:
+        repo: deb https://download.webmin.com/download/repository sarge contrib
+        state: present
+        mode: 0644
+        update_cache: yes
+        filename: webmin
+        install_python_apt: yes
+
+    - name: Install Webmin dependencies
+      package:
+        name: ['libhtml-parser-perl','libauthen-pam-perl', 'libnet-ssleay-perl', 'openssl', 'libio-stty-perl', 'libencode-detect-perl', 'python3-pymysql', 'mariadb-client', 'mariadb-server', 'libmariadbclient-dev', 'libmariadb-dev', 'libdbd-mariadb-perl', 'perl']
+        state: present
+        update_cache: true
+
+    - name: Install Webmin in VPS instance
+      package:
+        name: webmin
+        state: present
+      notify: 
+        - "Stop Webmin"
+        - "Restart Webmin"
+      when: not ansible_check_mode
+
+    - name: Stop and disable a old Webmin service
+      shell: "service webmin stop"
+
+    - name: Enable the new Webmin service
+      service: # when I use the module service, webmin service don't be stop
+        name: webmin
+        state: restarted
+        enabled: yes
+        force: yes
+        daemon_reload: yes
+      notify:
+        - "Stop Webmin"
+        - "Restart Webmin"
