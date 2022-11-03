@@ -23,111 +23,117 @@
     #   when: [ letsencrypt_cert_src.stat.exists == true ]
 
     - name: Check if the nextcloud it's installed
-      raw: "{{ nc_occ_command }} status"
+      raw: '{{ nc_occ_command }} status'
       register: nextcloud_installed
 
     - name: Initialize Nextcloud to use
-      raw: "{{ nc_occ_command }}  maintenance:install --database=mysql --database-host={{ mysql_db_host }} --database-name={{ mysql_db_name }} --database-user={{ mysql_user_name }} --database-pass={{ mysql_user_password }} --data-dir={{ dk_data_folder }} --admin-user={{ nc_admin_user }} --admin-pass={{ nc_admin_pass }}"
+      raw: '{{ nc_occ_command }}  maintenance:install --database=mysql --database-host={{ mysql_db_host }} --database-name={{ mysql_db_name }} --database-user={{ mysql_user_name }} --database-pass={{ mysql_user_password }} --data-dir={{ dk_data_folder }} --admin-user={{ nc_admin_user }} --admin-pass={{ nc_admin_pass }}'
       when: "'installed: false' in nextcloud_installed.stdout"
 
     # - name: Add the subdomain at trusted domains
-    #   raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value={{ dk_nc_subdomain }} -- trusted_domains[0]"
+    #   raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value="{{ default_nc_subdomain }}" -- trusted_domains[0]'
  
     - name: Change Override URL parameter at the correct subdomain
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value={{ dk_nc_subdomain }} -- overwrite.cli.url"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value="https://{{ default_nc_subdomain }}/{{ default_name_nc_folder }}/" -- overwrite.cli.url'
+
+    - name: Setting the phone region
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=es -- default_phone_region'
 
     - name: Setting the smtpmode for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=smtp -- mail_smtpmode"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=smtp -- mail_smtpmode'
 
     - name: Setting the smtpauthtype for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=LOGIN -- mail_smtpauthtype"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=LOGIN -- mail_smtpauthtype'
 
     - name: Setting the smtpauth for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=integer --quiet --value=1 -- mail_smtpauth"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_integer }} --value=1 -- mail_smtpauth'
 
     - name: Setting the smtphost for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=imap.gmail.com -- mail_smtphost"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=imap.gmail.com -- mail_smtphost'
 
     - name: Setting the from_address for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=cwebtecnico -- mail_from_address"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=cwebtecnico -- mail_from_address'
 
     - name: Setting the domain for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=gmail.com -- mail_domain"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=gmail.com -- mail_domain'
 
     - name: Setting the smtpport for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=993 -- mail_smtpport"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=993 -- mail_smtpport'
 
     - name: Setting the smtpname for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=cwebtecnico@gmail.com -- mail_smtpname"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=cwebtecnico@gmail.com -- mail_smtpname'
 
     - name: Setting the smtppassword for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value={{ dk_nc_subdomain }} -- mail_smtppassword"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value="{{ default_nc_subdomain }}" -- mail_smtppassword'
 
     - name: Setting the smtpsecure for email config
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=ssl -- mail_smtpsecure"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=ssl -- mail_smtpsecure'
 
     - name: Setting the channel from download the updates
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=stable -- updater.release.channel"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=stable -- updater.release.channel'
 
     - name: Setting type at file for the logs
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=string --quiet --value=file -- log_type"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value=file -- log_type'
 
     - name: Setting the level of logs
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=integer --quiet --value=3 -- loglevel"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_integer }} --value=3 -- loglevel'
 
     - name: Setting at false the preview of files
-      raw: "{{ nc_occ_command }}  config:system:set --output=json --type=boolean --quiet --value=false -- enable_previews"
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_boolean }} --value=false -- enable_previews'
 
+    - name: Setting at APCu as local cache configuration
+      raw: '{{ nc_occ_command }}  {{ nc_occ_set_string }} --value="\OC\Memcache\APCu" -- memcache.local'
+    
     - name: Setting the correct trusted domain in config file
       lineinfile:
-        path: "{{ dk_wserver_folder }}/nextcloud/config/config.php"
+        path: "{{ dk_nextcloud_folder }}/config/config.php"
         regexp: "    0 => 'localhost',"
-        line: "    0 => '{{ dk_nc_subdomain }}',"
+        line: "    0 => '{{ default_nc_subdomain }}',"
         state: present
 
     - name: Install some applications
-      raw: "{{ nc_occ_command }} app:install --quiet -- {{ item }}"
+      raw: '{{ nc_occ_command }} app:install --quiet -- {{ item }}'
       register: result
       failed_when: result.rc not in [0,1]
       with_items: "{{ nc_install_apps }}"
 
     - name: Check the disabled apps
-      raw: "{{ nc_occ_command }} app:list | grep -i -A 50 disabled"
+      raw: '{{ nc_occ_command }} app:list | grep -i -A 50 disabled'
       register: nc_apps_disabled
 
     - name: Disable some applications
-      raw: "{{ nc_occ_command }} app:disable --quiet -- {{ item }}"
+      raw: '{{ nc_occ_command }} app:disable --quiet -- {{ item }}'
       when: item not in nc_apps_disabled.stdout
       with_items: "{{ nc_disable_apps }}"
 
     - name: Check how much goups are in Nextcloud
-      raw: "{{ nc_occ_command }} group:list"
+      raw: '{{ nc_occ_command }} group:list'
       register: nc_exist_groups
 
     - name: Create Groups of App Nextcloud
-      raw: "{{ nc_occ_command }} group:add --quiet --display-name={{ item.name }} -- {{ item.id }}"
+      raw: '{{ nc_occ_command }} group:add --quiet --display-name={{ item.name }} -- {{ item.id }}'
       when: item.id not in nc_exist_groups.stdout
       with_items: "{{ nc_app_groups }}"
 
     - name: Check how much user are in Nextcloud
-      raw: "{{ nc_occ_command }} user:list"
+      raw: '{{ nc_occ_command }} user:list'
       register: nc_exist_users
 
     - name: Create Users of App Nextcloud
-      raw: "sudo -u {{ nx_name_user }} OC_PASS={{ item.pass }} /usr/bin/php {{ dk_wserver_folder }}/nextcloud/occ user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}"
+      raw: 'sudo -u {{ nx_name_user }} OC_PASS={{ item.pass }} /usr/bin/php --define apc.enable_cli=1 {{ dk_nextcloud_folder }}/occ user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}'
       when: item.id not in nc_exist_users.stdout
       with_items: "{{ nc_app_users }}"
       no_log: true
 
     - name: Join Groups with Users
-      raw: "{{ nc_occ_command }} group:adduser --quiet {{ item[0].id }} {{ item[1].id }}"
+      raw: '{{ nc_occ_command }} group:adduser --quiet {{ item[0].id }} {{ item[1].id }}'
       with_nested:
         - "{{ nc_app_groups }}"
         - "{{ nc_app_users }}"
       no_log: true
 
     # - name: Associate the groups at the applications Calendars, Bookmarks, Tasks
-    #   raw: "{{ nc_occ_command }} config:app:set --value=[\\\"admin\\\",\\\"{{ item }}\\\"] -- {{ item }} enabled"
+    #   raw: '{{ nc_occ_command }} config:app:set --value=["admin","{{ item }}"] -- {{ item }} enabled'
     #   when: "'{{ item }}' in nc_apps_installed.stdout"
     #   with_items:
     #     - bookmarks
@@ -136,11 +142,11 @@
     #     - side_menu
 
     - name: Check the installed apps
-      raw: "{{ nc_occ_command }} app:list"
+      raw: '{{ nc_occ_command }} app:list'
       register: nc_apps_installed
 
     - name: Config at Side Menu application of the Nextcloud third party
-      raw: "{{ nc_occ_command }} config:app:set --value={{ item.value }} -- side_menu {{ item.key }}"
+      raw: '{{ nc_occ_command }} config:app:set --value={{ item.value }} -- side_menu {{ item.key }}'
       when: "'side_menu' in nc_apps_installed.stdout"
       with_items:
         - { key: 'enabled', value: '[\"admin\"]' }
@@ -152,18 +158,18 @@
 # here you have put the import data of calendar bookmarks and tasks
 
     - name: Apply some index at DB and convert at BigInt filecache
-      raw: "{{ nc_occ_command }} {{ item }}"
+      raw: '{{ nc_occ_command }} {{ item }}'
       with_items:
         - db:add-missing-indices --quiet
         - db:convert-filecache-bigint --quiet
 
     - name: Activate mantaince mode
-      raw: "{{ nc_occ_command }} maintenance:mode --on"
+      raw: '{{ nc_occ_command }} maintenance:mode --on'
 
 # aqui es donde tienes que sacar la copia de seguridad 
 
     - name: Deactivate mantaince mode
-      raw: "{{ nc_occ_command }} maintenance:mode --off"
+      raw: '{{ nc_occ_command }} maintenance:mode --off'
 
     # - name: Restart container Nextcloud
     #   docker_container:
