@@ -30,7 +30,7 @@
 
     - name: Backup of contacts from webUI of Nextcloud for all Users
       get_url:
-        url: "https://{{ dk_nc_subdomain }}/remote.php/dav/addressbooks/users/{{ item.id }}/contacts/?export"
+        url: "https://{{ default_nc_subdomain }}/remote.php/dav/addressbooks/users/{{ item.id }}/contacts/?export"
         url_username: "{{ item.id }}"
         url_password: "{{ item.pass }}"
         dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-contacts.vcf"
@@ -55,7 +55,7 @@
 
     - name: Backup of Bookmarks from webUI of Nextcloud for all Users
       get_url: 
-        url: "https://{{ dk_nc_subdomain }}/apps/bookmarks/public/rest/v2/bookmark/export"
+        url: "https://{{ default_nc_subdomain }}/apps/bookmarks/public/rest/v2/bookmark/export"
         url_username: "{{ item.id }}"
         url_password: "{{ item.pass }}"
         dest: "{{ dk_data_folder }}/{{ item.id }}/files/{{ item.name }}-{{ ansible_date_time.date }}-bookmarks.html"

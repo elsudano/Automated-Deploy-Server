@@ -16,19 +16,32 @@
     - name: Unarchive the NextCloud file
       unarchive:
         src: "{{ nc_version_url_package }}"
-        dest: "{{ dk_wserver_folder }}"
+        dest: "{{ dk_nextcloud_folder }}"
+        extra_opts: [--strip-components=1]
         remote_src: true
-    
-    - name: "Set the correct user and group in the NextCloud folder ( {{ dk_wserver_folder }}/nextcloud )."
+
+    # - name: Rename the folder where we have Nextcloud
+    #   copy:
+    #     src: "{{ dk_wserver_folder }}/nextcloud/"
+    #     dest: "{{ dk_nextcloud_folder }}"
+    #     remote_src: true
+
+    - name: "Set the correct user and group in the NextCloud folder ( {{ dk_nextcloud_folder }} )."
       file:
-        path: "{{ dk_wserver_folder }}/nextcloud"
+        path: "{{ dk_nextcloud_folder }}"
         state: directory
         owner: "{{ nx_name_user }}"
         group: "{{ nx_group_user }}"
         recurse: true
 
-    - name: "Set the correct permissions in the NextCloud folder ( {{ dk_wserver_folder }}/nextcloud )."
+    - name: "Set the correct permissions in the NextCloud folder ( {{ dk_nextcloud_folder }} )."
       file:
-        path: "{{ dk_wserver_folder }}/nextcloud"
+        path: "{{ dk_nextcloud_folder }}"
         state: directory
         mode: 0775
+
+    - name: "Set the correct permissions in the NextCloud DATA folder ( {{ dk_data_folder }} )."
+      file:
+        path: "{{ dk_data_folder }}"
+        state: directory
+        mode: 0770

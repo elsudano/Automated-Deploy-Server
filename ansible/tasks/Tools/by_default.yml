@@ -31,13 +31,13 @@
 
     - name: Change config of Nextcloud at not installed
       lineinfile:
-        dest: "{{ dk_app_folder }}/nextcloud/config/config.php"
+        dest: "{{ dk_nextcloud_folder }}/config/config.php"
         regexp: "'installed' =>"
         line: "'installed' => false,"
 
     - name: Create a one file of control CAN_INSTALL
       file:
-        path: "{{ dk_app_folder }}/nextcloud/config/CAN_INSTALL"
+        path: "{{ dk_nextcloud_folder }}/config/CAN_INSTALL"
         owner: "{{ default_name_user }}"
         group: "{{ default_group_user }}"
         mode: "0640"
