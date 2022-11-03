@@ -15,4 +15,4 @@ google ansible_ssh_user=centos ansible_host=mync.sudano.net short_host=server
 
 ovh ansible_ssh_user=root ansible_host=nc.sudano.net short_host=server
 
-test ansible_host=0.0.0.0/0 short_host=test
+nas ansible_ssh_user=root ansible_host=myserver short_host=nas
