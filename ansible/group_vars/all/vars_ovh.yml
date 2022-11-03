@@ -1,0 +1,605 @@
+# Configuration Vars
+install_in_docker: false
+install_out_of_docker: true
+
+# Variables for the root yml configuration
+gn_file_pub_rsa_pro: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+gn_file_pub_rsa_dev: "{{ lookup('file', '~/.ssh/id_rsa_deploying.pub') }}" 
+
+# Users
+gn_users:
+  - name: usuario
+    group: usuarios
+    uid: 1020
+    gid: 1020
+    home: /usuario
+    key_file: "{{ gn_file_pub_rsa_pro }}"
+    comment: Usuario genérico
+  - name: nginx
+    group: usuarios
+    uid: 1021
+    gid: 1020
+    home: /usuario/nginx
+    key_file: "{{ gn_file_pub_rsa_pro }}"
+    comment: Nginx webserver user
+
+# Common Tasks
+all_folders:
+  - "{{ dk_wserver_folder }}"
+  - "{{ dk_app_folder }}"
+  - "{{ dk_db_folder }}"
+  - "{{ dk_data_folder }}"
+  - "{{ pt_data_folder }}"
+
+default_name_user: "{{ gn_users[0].name }}"
+default_group_user: "{{ gn_users[0].group }}"
+default_uid_user: "{{ gn_users[0].uid }}"
+default_gid_user: "{{ gn_users[0].gid }}"
+default_config_folder: "{{ gn_users[0].home }}"
+
+dk_wserver_folder: "{{ default_config_folder }}/nginx"
+dk_app_folder: "{{ dk_wserver_folder }}/myapps"
+# We use this variable in the folder creation and the nginx configuration
+default_name_nc_folder: nc 
+dk_nextcloud_folder: "{{ dk_wserver_folder }}/{{ default_name_nc_folder }}"
+dk_db_folder: "{{ default_config_folder }}/ncBD"
+dk_data_folder: "{{ default_config_folder }}/ncData"
+dk_domain: "sudano.net"
+
+# Portainer vars
+pt_container_name: portainer
+pt_data_folder: "{{ default_config_folder }}/ptData"
+pt_host: "172.0.11.4"
+
+# Firewalls variables
+fw_open_services:
+  - http
+  - https
+  - ssh
+
+fw_closed_services:
+  # - http
+  # - https
+
+fw_open_ports:
+  - 8000/tcp
+  - 9000/tcp
+  - 9090/tcp
+  - 10000/tcp
+
+fw_closed_ports:
+  - 8000/tcp
+  - 9000/tcp
+  - 9090/tcp
+  # - 10000/tcp
+
+# LetsEncrypt tasks
+le_email: pepitogrillo148@hotmail.com
+# le_debug: false
+
+# FIXME: you have to check all these variables
+# because some of them are not used
+# MySQL Database
+database_container_name: mariadb
+mysql_db_host: "localhost"
+mysql_db_name: ncdb
+mysql_db_dump_folder: "{{ default_config_folder }}/files/DBbackups"
+mysql_enablerepo:
+  - "epel"
+mysql_enabled_on_startup: true
+overwrite_global_mycnf: true
+mysql_root_password_update: true
+mysql_remove_test_database: true
+mysql_remove_anonymous_users: true
+mysql_remove_remote_root: true
+mysql_user_home: "{{ default_config_folder }}"
+mysql_user_name: "{{ default_name_user }}"
+# mysql_user_name: root
+# mysql_user_password: value in vault
+mysql_root_home: /root
+mysql_root_name: root
+# mysql_root_password: value in vault
+mysql_packages:
+  - mariadb-client
+  - mariadb-server
+  - python3-mysqldb
+mysql_users:
+  - name: "{{ mysql_user_name }}"
+    host: "%"
+    password: "{{ mysql_user_password }}"
+
+# Nginx WebServer
+webserver_container_name: nginx
+nx_name_user: "{{ gn_users[1].name }}"
+nx_group_user: "{{ gn_users[1].group }}"
+nx_config_folder: /etc/nginx
+nx_available_folder: "{{ nx_config_folder }}/conf.d"
+nx_enabled_folder: "{{ nx_config_folder }}/sites-enabled"
+# NGINX Role
+nginx_user: "{{ nx_name_user }} {{ nx_group_user }}"
+nginx_listen_ipv6: false
+nginx_service_state: started
+nginx_service_enabled: true
+nginx_server_tokens: "off" # Prevent nginx HTTP Server Detection
+nginx_remove_default_vhost: true
+nginx_keepalive_timeout: "65"
+nginx_keepalive_requests: "100"
+nginx_client_max_body_size: "64m"
+nginx_mime_file_path: /etc/nginx/mime.types
+
+nginx_extra_http_options: |
+  upstream php-handler {
+      server 127.0.0.1:9000;
+      #server unix:/var/run/php/php{{ php_version }}-fpm.sock;
+  }
+
+  # Set the `immutable` cache control options only for assets with a cache busting `v` argument
+  map $arg_v $asset_immutable {
+      "" "";
+      default "immutable";
+  }
+
+  proxy_buffering    off;
+  proxy_set_header   X-Real-IP $remote_addr;
+  proxy_set_header   X-Scheme $scheme;
+  proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header   Host $http_host;
+
+  charset utf-8;
+
+  # Add headers to serve security related headers
+  # Before enabling Strict-Transport-Security headers please read into this
+  # topic first.
+  add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+  #
+  # WARNING: Only add the preload option once you read about
+  # the consequences in https://hstspreload.org/. This option
+  # will add the domain to a hardcoded list that is shipped
+  # in all major browsers and getting removed from this list
+  # could take several months.
+  add_header X-Content-Type-Options nosniff;
+  add_header X-XSS-Protection "1; mode=block";
+  add_header X-Robots-Tag none;
+  add_header X-Download-Options noopen;
+  add_header X-Permitted-Cross-Domain-Policies none;
+  add_header Referrer-Policy no-referrer;
+
+  # Remove X-Powered-By, which is an information leak
+  fastcgi_hide_header X-Powered-By;
+
+  ssl_certificate /etc/letsencrypt/live/{{ dk_domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ dk_domain }}/privkey.pem;
+  ssl_protocols TLSv1.2;
+  # ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+  ssl_prefer_server_ciphers on;
+  ssl_session_cache shared:ssl_session_cache:10m;
+
+  # Pagespeed is not supported by Nextcloud, so if your server is built
+  # with the `ngx_pagespeed` module, uncomment this line to disable it.
+  #pagespeed off;
+
+  # The settings allows you to optimize the HTTP2 bandwitdth.
+  # See https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/
+  # for tunning hints
+  client_body_buffer_size 512k;
+    
+  gzip on;
+  gzip_proxied
+      expired
+      no-cache
+      no-store
+      private
+      no_last_modified
+      no_etag
+      auth;
+  gzip_static on;
+  gzip_http_version 1.0;
+  gzip_disable "MSIE [1-6]\.";
+  gzip_vary on;
+  gzip_comp_level 6;
+  gzip_types
+      text/plain
+      text/css
+      text/xml
+      text/javascript
+      application/javascript
+      application/x-javascript
+      application/json
+      application/xml
+      application/xml+rss
+      application/xhtml+xml
+      application/x-font-ttf
+      application/x-font-opentype
+      image/svg+xml
+      image/x-icon;
+  gzip_buffers 16 8k;
+  gzip_min_length 512;
+
+  # Uncomment if your server is build with the ngx_pagespeed module
+  # This module is currently not supported.
+  #pagespeed off;
+
+  # stream{
+  #   server {
+  #     listen 5432;
+  #     location / {
+  #       proxy_pass databases;
+  #       proxy_timeout 3s;
+  #       proxy_connect_timeout 1s;
+  #     }
+  #   }
+  # }
+
+nginx_vhosts:
+  - listen: "443 ssl http2"
+    server_name: "{{ dk_domain }}, myapps.{{ dk_domain }}"
+    index: "index.php index.html index.htm /index.php$request_uri"
+    root: "{{ dk_wserver_folder }}"
+    # error_page: ""
+    access_log: "/var/log/nginx/myapps_access.log main buffer=16k flush=10s"
+    error_log: "/var/log/nginx/myapps_error.log"
+    state: "present"
+    template: "{{ nginx_vhost_template }}"
+    filename: "myapps.conf"
+    extra_parameters: |
+      # set max upload size and increase upload timeout:
+      client_max_body_size 512M;
+      client_body_timeout 300s;
+      fastcgi_buffers 64 4K;
+  
+      add_header Strict-Transport-Security "max-age=15768000; includeSubDomains; preload" always;
+
+      error_page 404 403 /400.html;
+      error_page 500 502 503 504 /500.html;
+      location = /40x.html {}
+      location = /50x.html {}
+      location = /robots.txt {
+          allow all;
+          log_not_found off;
+          access_log off;
+      }
+      location ~ [^/]\.php(/|$) {
+          include fastcgi_params;
+          # Remove the Connection header if the client sends it,
+          # it could be "close" to close a keepalive connection
+          proxy_set_header Connection "";
+          proxy_set_header Host $host;
+          proxy_ssl_verify off;
+          proxy_ssl_verify_depth 2;
+          proxy_ssl_session_reuse on;
+
+          fastcgi_param HTTP_PROXY "";                    # Mitigate https://httpoxy.org/ vulnerabilities
+          fastcgi_param modHeadersAvailable true;         # Avoid sending the security headers twice
+          fastcgi_param front_controller_active true;     # Enable pretty urls
+
+          fastcgi_pass php-handler;
+
+          # SCRIPT_FILENAME parameter is used for PHP FPM determining
+          #  the script name. If it is not set in fastcgi_params file,
+          # i.e. /etc/nginx/fastcgi_params or in the parent contexts,
+          # please comment off following line:
+          fastcgi_param  SCRIPT_FILENAME   $document_root$fastcgi_script_name;
+
+          fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+          try_files $uri =404;
+          if (!-f $document_root$fastcgi_script_name) {
+          return 404;
+          }
+      }
+      location ~ \.(?:css|js|svg|gif|png|jpg|ico|wasm|tflite|map)$ {
+          try_files $uri /index.php$request_uri;
+          add_header Cache-Control "public, max-age=15778463, $asset_immutable";
+          access_log off;     # Optional: Don't log access to assets
+          location ~ \.wasm$ {
+              default_type application/wasm;
+          }
+      }
+      location / {
+          try_files $uri $uri/ /index.php$request_uri;
+      }
+
+  - listen: "443 ssl http2"
+    server_name: "{{ dk_domain }}, nc.{{ dk_domain }}"
+    index: "index.php index.html index.htm /index.php$request_uri"
+    root: "{{ dk_wserver_folder }}"
+    # error_page: ""
+    access_log: "/var/log/nginx/nextcloud_access.log main buffer=16k flush=2m"
+    error_log: "/var/log/nginx/nextcloud_error.log"
+    state: "present"
+    template: "{{ nginx_vhost_template }}"
+    filename: "nextcloud.conf"
+    extra_parameters: |
+      # set max upload size and increase upload timeout:
+      client_max_body_size 512M;
+      client_body_timeout 300s;
+      fastcgi_buffers 64 4K;
+
+      error_page 404 403 /400.html;
+      error_page 500 502 503 504 /500.html;
+      location = /40x.html {}
+      location = /50x.html {}
+
+      # HSTS settings
+      # WARNING: Only add the preload option once you read about
+      # the consequences in https://hstspreload.org/. This option
+      # will add the domain to a hardcoded list that is shipped
+      # in all major browsers and getting removed from this list
+      # could take several months.
+      add_header Strict-Transport-Security "max-age=15768000; includeSubDomains; preload" always;
+
+      location = /robots.txt {
+          allow all;
+          log_not_found off;
+          access_log off;
+      }
+
+      location ^~ /.well-known {
+          # The rules in this block are an adaptation of the rules
+          # in the Nextcloud `.htaccess` that concern `/.well-known`.
+
+          location = /.well-known/carddav { return 301 /{{ default_name_nc_folder }}/remote.php/dav/; }
+          location = /.well-known/caldav  { return 301 /{{ default_name_nc_folder }}/remote.php/dav/; }
+
+          location /.well-known/webfinger { return 301 /{{ default_name_nc_folder }}/index.php/.well-known/webfinger; }
+          location /.well-known/nodeinfo { return 301 /{{ default_name_nc_folder }}/index.php/.well-known/nodeinfo; }
+
+          location /.well-known/acme-challenge { try_files $uri $uri/ =404; }
+          location /.well-known/pki-validation { try_files $uri $uri/ =404; }
+
+          # Let Nextcloud's API for `/.well-known` URIs handle all other
+          # requests by passing them to the front-end controller.
+          return 301 /{{ default_name_nc_folder }}/index.php$request_uri;
+      }
+
+      location ^~ /{{ default_name_nc_folder }} {
+          # set max upload size and increase upload timeout:
+          client_max_body_size 512M;
+          client_body_timeout 300s;
+          fastcgi_buffers 64 4K;
+
+          # Enable gzip but do not remove ETag headers
+          gzip on;
+          gzip_vary on;
+          gzip_comp_level 4;
+          gzip_min_length 256;
+          gzip_proxied expired no-cache no-store private no_last_modified no_etag auth;
+          gzip_types application/atom+xml application/javascript application/json application/ld+json application/manifest+json application/rss+xml application/vnd.geo+json application/vnd.ms-fontobject application/wasm application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/bmp image/svg+xml image/x-icon text/cache-manifest text/css text/plain text/vcard text/vnd.rim.location.xloc text/vtt text/x-component text/x-cross-domain-policy;
+
+          # Pagespeed is not supported by Nextcloud, so if your server is built
+          # with the `ngx_pagespeed` module, uncomment this line to disable it.
+          #pagespeed off;
+
+          # The settings allows you to optimize the HTTP2 bandwitdth.
+          # See https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/
+          # for tunning hints
+          client_body_buffer_size 512k;
+
+          # HTTP response headers borrowed from Nextcloud `.htaccess`
+          add_header Referrer-Policy                      "no-referrer"   always;
+          add_header X-Content-Type-Options               "nosniff"       always;
+          add_header X-Download-Options                   "noopen"        always;
+          add_header X-Frame-Options                      "SAMEORIGIN"    always;
+          add_header X-Permitted-Cross-Domain-Policies    "none"          always;
+          add_header X-Robots-Tag                         "none"          always;
+          add_header X-XSS-Protection                     "1; mode=block" always;
+
+          # Remove X-Powered-By, which is an information leak
+          fastcgi_hide_header X-Powered-By;
+
+          # Specify how to handle directories -- specifying `/{{ default_name_nc_folder }}/index.php$request_uri`
+          # here as the fallback means that Nginx always exhibits the desired behaviour
+          # when a client requests a path that corresponds to a directory that exists
+          # on the server. In particular, if that directory contains an index.php file,
+          # that file is correctly served; if it doesn't, then the request is passed to
+          # the front-end controller. This consistent behaviour means that we don't need
+          # to specify custom rules for certain paths (e.g. images and other assets,
+          # `/updater`, `/ocm-provider`, `/ocs-provider`), and thus
+          # `try_files $uri $uri/ /{{ default_name_nc_folder }}/index.php$request_uri`
+          # always provides the desired behaviour.
+          index index.php index.html /{{ default_name_nc_folder }}/index.php$request_uri;
+
+          # Rule borrowed from `.htaccess` to handle Microsoft DAV clients
+          location = /{{ default_name_nc_folder }} {
+              if ( $http_user_agent ~ ^DavClnt ) {
+                  return 302 /{{ default_name_nc_folder }}/remote.php/webdav/$is_args$args;
+              }
+          }
+
+          # Rules borrowed from `.htaccess` to hide certain paths from clients
+          location ~ ^/{{ default_name_nc_folder }}/(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)    { return 404; }
+          location ~ ^/{{ default_name_nc_folder }}/(?:\.|autotest|occ|issue|indie|db_|console)                  { return 404; }
+
+          # Ensure this block, which passes PHP files to the PHP process, is above the blocks
+          # which handle static assets (as seen below). If this block is not declared first,
+          # then Nginx will encounter an infinite rewriting loop when it prepends
+          # `/{{ default_name_nc_folder }}/index.php` to the URI, resulting in a HTTP 500 error response.
+          location ~ \.php(?:$|/) {
+              # Required for legacy support
+              rewrite ^/{{ default_name_nc_folder }}/(?!index|remote|public|cron|core\/ajax\/update|status|ocs\/v[12]|updater\/.+|oc[ms]-provider\/.+|.+\/richdocumentscode\/proxy) /nextcloud/index.php$request_uri;
+
+              fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+              set $path_info $fastcgi_path_info;
+
+              try_files $fastcgi_script_name =404;
+
+              include fastcgi_params;
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_param PATH_INFO $path_info;
+              fastcgi_param HTTPS on;
+
+              fastcgi_param modHeadersAvailable true;         # Avoid sending the security headers twice
+              fastcgi_param front_controller_active true;     # Enable pretty urls
+              fastcgi_pass php-handler;
+
+              fastcgi_intercept_errors on;
+              fastcgi_request_buffering off;
+
+              fastcgi_max_temp_file_size 0;
+          }
+
+          location ~ \.(?:css|js|svg|gif|png|jpg|ico|wasm|tflite|map)$ {
+              try_files $uri /{{ default_name_nc_folder }}/index.php$request_uri;
+              add_header Cache-Control "public, max-age=15778463, $asset_immutable";
+              access_log off;     # Optional: Don't log access to assets
+
+              location ~ \.wasm$ {
+                  default_type application/wasm;
+              }
+          }
+
+          location ~ \.woff2?$ {
+              try_files $uri /{{ default_name_nc_folder }}/index.php$request_uri;
+              expires 7d;         # Cache-Control policy borrowed from `.htaccess`
+              access_log off;     # Optional: Don't log access to assets
+          }
+
+          # Rule borrowed from `.htaccess`
+          location /{{ default_name_nc_folder }}/remote {
+              return 301 /{{ default_name_nc_folder }}/remote.php$request_uri;
+          }
+
+          location /{{ default_name_nc_folder }} {
+              try_files $uri $uri/ /{{ default_name_nc_folder }}/index.php$request_uri;
+          }
+      }
+  
+nginx_log_format: |-
+  '$remote_addr - $remote_user [$time_local] '
+  '$ssl_protocol/$ssl_cipher '
+  '"$request" $status $body_bytes_sent '
+  '"$http_referer" "$http_user_agent" "$gzip_ratio" '
+  '$request_time $upstream_connect_time $upstream_header_time $upstream_response_time '
+  '$host $upstream_addr'
+
+#CERTBOT
+certbot_install_method: package
+certbot_create_if_missing: true
+certbot_create_method: standalone
+certbot_testmode: false
+certbot_admin_email: cwebtecnico@gmail.com
+certbot_hsts: true
+
+certbot_certs:
+  - email: cwebtecnico@gmail.com
+    webroot: "{{ dk_wserver_folder }}"
+    domains:
+      - "{{ dk_domain }}"
+      - "*.{{ dk_domain }}"
+
+certbot_auto_renew: false
+certbot_auto_renew_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+certbot_auto_renew_hour: "3"
+certbot_auto_renew_minute: "30"
+certbot_auto_renew_options: "--quiet --no-self-upgrade"
+
+certbot_create_command: "{{ certbot_script }} certonly --dns-ovh --dns-ovh-credentials {{ default_config_folder }}/ovh.ini --noninteractive --agree-tos --email {{ cert_item.email | default(certbot_admin_email) }} -d {{ cert_item.domains | join(',') }}"
+certbot_create_standalone_stop_services:
+  - nginx
+
+# Network Config
+net_name_network: "nextcloud"
+net_cidr: 172.0.11.0/16
+net_gateway_ip: 172.0.11.1
+net_subnet_range: 172.0.11.0/28
+
+# Pip Role
+pip_package: python3-pip
+pip_install_packages: [ docker ]
+
+# PHP Role
+php_version: '8.0'
+php_enable_php_fpm: true
+php_webserver_daemon: "nginx"
+php_fpm_pool_user: "{{ nx_name_user }}"
+php_fpm_pool_group: "{{ nx_group_user }}"
+php_memory_limit: "512M"
+php_fpm_pools:
+  - pool_name: www
+    pool_template: mywww.conf.j2
+    pool_listen: "127.0.0.1:9000"
+php_enablerepo: 
+  - epel
+
+# Docker Role
+docker_users: [ root, usuario ]
+
+# Nextcloud Tasks
+application_container_name: nextcloud
+nc_php_list_prerequisities:
+  - "php{{ php_version }}-common"
+  - "php{{ php_version }}-mysql"
+  - "php{{ php_version }}-odbc"
+  - "php{{ php_version }}-pgsql"
+  - "php{{ php_version }}-sqlite3"
+  - "php{{ php_version }}-cli"
+  - "php{{ php_version }}-zip"
+  - "php{{ php_version }}-intl"
+  - "php{{ php_version }}-imagick"
+  - "php{{ php_version }}-gmp"
+  - "php{{ php_version }}-bcmath"
+  - "php{{ php_version }}-gd"
+  - "php{{ php_version }}-curl"
+  - "php{{ php_version }}-mbstring"
+  - "php{{ php_version }}-xml"
+  - "php{{ php_version }}-bz2"
+  - "php{{ php_version }}-ldap"
+  - "php{{ php_version }}-smbclient"
+  - "php{{ php_version }}-imap"
+  - "php{{ php_version }}-memcached"
+  - "php{{ php_version }}-apcu"
+  - "php{{ php_version }}-redis"
+  - "libmagickcore-6.q16-6-extra"
+  - "php-mysqlnd-ms"
+  - "php-json"
+  - "php-mysql"
+  - "php-gd"
+  - "php-curl"
+  - "php-mbstring"
+  - "php-xml"
+  - "php-apcu"
+
+nc_admin_user: admin
+# The follow var it's in value
+# nc_admin_pass:
+nc_version_url_package: https://download.nextcloud.com/server/releases/latest.tar.bz2
+nc_occ_command: "sudo -u {{ nx_name_user }} /usr/bin/php --define apc.enable_cli=1 {{ dk_nextcloud_folder }}/occ"
+nc_occ_set_string: "config:system:set --output=json --type=string --quiet"
+nc_occ_set_integer: "config:system:set --output=json --type=integer --quiet"
+nc_occ_set_boolean: "config:system:set --output=json --type=boolean --quiet"
+# The following command is to execute within of docker
+# nc_occ_command: "docker exec -it {{ application_container_name }} sudo -u abc /usr/bin/php /config/www/nextcloud/occ"
+nc_nextcloud_host: "172.0.11.2"
+# The follow var it's in vault
+# nc_app_users:
+#   - { id: capside, name: Capside, pass: somestring }
+#   - { id: test, name: Test, pass: somestring }
+nc_app_groups:
+  - { id: bookmarks, name: bookmarks }
+  - { id: calendar, name: calendars }
+  - { id: contacts, name: contacts }
+  - { id: tasks, name: tasks }
+  - { id: side_menu, name: side_menu }
+  - { id: users, name: users }
+nc_install_apps:
+  - calendar
+  - contacts
+  - bookmarks
+  - tasks
+  - side_menu
+nc_disable_apps:
+  - comments
+  - accessibility
+  - activity
+  - admin_audit
+  - comments
+  - encryption
+  - federation
+  - files_external
+  - firstrunwizard
+  - nextcloud_announcements
+  - recommendations
+  - photos
+  - support
+  - survey_client
+  - systemtags
+  - user_ldap
