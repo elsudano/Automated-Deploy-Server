@@ -15,7 +15,7 @@
         url: http://www.webmin.com/jcameron-key.asc
         state: present
 
-    - name: Add webmin yum repository
+    - name: Add webmin APT repository
       apt_repository:
         repo: deb https://download.webmin.com/download/repository sarge contrib
         state: present
