@@ -1,0 +1,3 @@
+---
+default_nc_subdomain: "nc.casa.local"
+le_debug: False
