@@ -16,7 +16,19 @@
         state: dump
         target: "{{ dk_data_folder }}{{ mysql_db_dump_folder }}/database-dump-{{ ansible_date_time.date }}.sql"
 
+    - name: Set permissions to create a backup
+      file:
+        path: "/usuario/ncData"
+        state: directory
+        mode: 0770
+
     - name: Refresh data of folders to users
       raw: "{{ nc_occ_command }} files:scan --home-only --quiet {{ item.id }}"
-      no_log: true
+      no_log: "{{ set_no_log }}"
       with_items: "{{ nc_app_users }}"
+
+    - name: Set permissions to create a backup
+      file:
+        path: "/usuario/ncData"
+        state: directory
+        mode: 0775

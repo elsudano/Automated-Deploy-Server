@@ -18,7 +18,7 @@
       owner: "{{ default_name_user }}"
       group: "{{ default_group_user }}"
       force_basic_auth: yes
-    no_log: true
+    no_log: "{{ set_no_log }}"
     loop: "{{ calendars_of_user|flatten(levels=1) }}"
     loop_control:
       loop_var: calendar

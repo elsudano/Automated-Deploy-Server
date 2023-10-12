@@ -179,7 +179,7 @@
         dest: "{{ default_config_folder }}/ovh.ini"
         owner: "{{ default_name_user }}"
         mode: "0600"
-      no_log: true
+      no_log: "{{ set_no_log }}"
 
     - name: Set authorized key taken from file for {{ default_name_user }}
       tags: always

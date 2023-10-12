@@ -42,7 +42,7 @@
     - name: List all calendars to user
       raw: "{{ nc_occ_command }} dav:list-calendars {{ item.id }} | grep {{ item.id }} | cut -d \\| -f2 | tr -d ' '"
       register: calendars_of_users
-      no_log: true
+      no_log: "{{ set_no_log }}"
       with_items: "{{ nc_app_users }}"
 
     # - name: Show the calendars of all users
@@ -62,12 +62,12 @@
         owner: "{{ default_name_user }}"
         group: "{{ default_group_user }}"
         force_basic_auth: yes
-      no_log: true
+      no_log: "{{ set_no_log }}"
       with_items: "{{ nc_app_users }}"
 
     - name: Refresh data of folders to users
       raw: "{{ nc_occ_command }} files:scan --home-only --quiet {{ item.id }}"
-      no_log: true
+      no_log: "{{ set_no_log }}"
       with_items: "{{ nc_app_users }}"
 
     - name: Copy bash files for automate backups

@@ -123,14 +123,14 @@
       raw: 'sudo -u {{ nx_name_user }} OC_PASS={{ item.pass }} /usr/bin/php --define apc.enable_cli=1 {{ dk_nextcloud_folder }}/occ user:add --password-from-env --display-name={{ item.name }} -- {{ item.id }}'
       when: item.id not in nc_exist_users.stdout
       with_items: "{{ nc_app_users }}"
-      no_log: true
+      no_log: "{{ set_no_log }}"
 
     - name: Join Groups with Users
       raw: '{{ nc_occ_command }} group:adduser --quiet {{ item[0].id }} {{ item[1].id }}'
       with_nested:
         - "{{ nc_app_groups }}"
         - "{{ nc_app_users }}"
-      no_log: true
+      no_log: "{{ set_no_log }}"
 
     # - name: Associate the groups at the applications Calendars, Bookmarks, Tasks
     #   raw: '{{ nc_occ_command }} config:app:set --value=["admin","{{ item }}"] -- {{ item }} enabled'
