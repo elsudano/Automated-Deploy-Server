@@ -11,7 +11,7 @@
       
   - name: Backup calendar of user {{ item.item.name }}.
     get_url:
-      url: "https://{{ default_nc_subdomain }}/remote.php/dav/calendars/{{ item.item.id }}/{{ calendar }}/?export"
+      url: "https://{{ default_name_nc_folder }}.{{ dk_domain }}/{{ default_name_nc_folder }}/remote.php/dav/calendars/{{ item.item.id }}/{{ calendar }}/?export"
       url_username: "{{ item.item.id }}"
       url_password: "{{ item.item.pass }}"
       dest: "{{ dk_data_folder }}/{{ item.item.id }}/files/{{ item.item.name }}-{{ ansible_date_time.date }}-calendar-{{ calendar }}.ics"

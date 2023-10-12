@@ -1,6 +1,7 @@
 # Configuration Vars
 install_in_docker: false
 install_out_of_docker: true
+set_no_log: true
 
 # Variables for the root yml configuration
 gn_file_pub_rsa_pro: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
@@ -150,7 +151,8 @@ nginx_extra_http_options: |
   # Add headers to serve security related headers
   # Before enabling Strict-Transport-Security headers please read into this
   # topic first.
-  add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+  # add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+  add_header Strict-Transport-Security "15552000";
   #
   # WARNING: Only add the preload option once you read about
   # the consequences in https://hstspreload.org/. This option
@@ -159,7 +161,7 @@ nginx_extra_http_options: |
   # could take several months.
   add_header X-Content-Type-Options nosniff;
   add_header X-XSS-Protection "1; mode=block";
-  add_header X-Robots-Tag none;
+  add_header X-Robots-Tag "noindex, nofollow";
   add_header X-Download-Options noopen;
   add_header X-Permitted-Cross-Domain-Policies none;
   add_header Referrer-Policy no-referrer;
@@ -375,13 +377,13 @@ nginx_vhosts:
           client_body_buffer_size 512k;
 
           # HTTP response headers borrowed from Nextcloud `.htaccess`
-          add_header Referrer-Policy                      "no-referrer"   always;
-          add_header X-Content-Type-Options               "nosniff"       always;
-          add_header X-Download-Options                   "noopen"        always;
-          add_header X-Frame-Options                      "SAMEORIGIN"    always;
-          add_header X-Permitted-Cross-Domain-Policies    "none"          always;
-          add_header X-Robots-Tag                         "none"          always;
-          add_header X-XSS-Protection                     "1; mode=block" always;
+          add_header Referrer-Policy                      "no-referrer"       always;
+          add_header X-Content-Type-Options               "nosniff"           always;
+          add_header X-Download-Options                   "noopen"            always;
+          add_header X-Frame-Options                      "SAMEORIGIN"        always;
+          add_header X-Permitted-Cross-Domain-Policies    "none"              always;
+          add_header X-Robots-Tag                         "noindex, nofollow" always;
+          add_header X-XSS-Protection                     "1; mode=block"     always;
 
           # Remove X-Powered-By, which is an information leak
           fastcgi_hide_header X-Powered-By;
@@ -559,20 +561,12 @@ nc_php_list_prerequisities:
   - "php-apcu"
 
 nc_admin_user: admin
-# The follow var it's in value
-# nc_admin_pass:
 nc_version_url_package: https://download.nextcloud.com/server/releases/latest.tar.bz2
 nc_occ_command: "sudo -u {{ nx_name_user }} /usr/bin/php --define apc.enable_cli=1 {{ dk_nextcloud_folder }}/occ"
 nc_occ_set_string: "config:system:set --output=json --type=string --quiet"
 nc_occ_set_integer: "config:system:set --output=json --type=integer --quiet"
 nc_occ_set_boolean: "config:system:set --output=json --type=boolean --quiet"
-# The following command is to execute within of docker
-# nc_occ_command: "docker exec -it {{ application_container_name }} sudo -u abc /usr/bin/php /config/www/nextcloud/occ"
 nc_nextcloud_host: "172.0.11.2"
-# The follow var it's in vault
-# nc_app_users:
-#   - { id: capside, name: Capside, pass: somestring }
-#   - { id: test, name: Test, pass: somestring }
 nc_app_groups:
   - { id: bookmarks, name: bookmarks }
   - { id: calendar, name: calendars }
