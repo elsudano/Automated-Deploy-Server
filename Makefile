@@ -12,6 +12,20 @@ ARCH = $(shell hostnamectl | grep "Architecture:" | awk -F\  '{ print $$2 }')
 TERRAFORM_BIN = $(shell which terraform)
 TFVER = $(shell $(TERRAFORM_BIN) --version | head -1 | tr -d 'Terraform v')
 
+define PRINT
+
+ifeq ($(1),INFO)
+	@echo -e "\033[33m[$(1)]\033[34m $(2)\033[39m"
+else ifeq ($(1),ERROR)
+	@echo -e "\033[31m[$(1)]\033[34m $(2)\033[39m"
+else ifeq ($(1),HELP)
+	@echo -e "\033[32m[$(1)]\033[34m $(2)\033[39m"
+else
+	@echo -e "\033[32m$(1)\033[39m"
+endif
+
+endef
+
 #-------------------------------------------------------#
 #    Public Functions                                   #
 #-------------------------------------------------------#
@@ -43,14 +57,15 @@ ifeq ($(VER),BETA)
 	$(eval TERRAFORM_BIN := /usr/bin/terraform-beta)
 	$(eval TFVER := 1.1.0-rc1)
 endif
-	@echo -e "Bin: $(TERRAFORM_BIN)"
-	@echo -e "TFVer: $(TFVER)"
+	@echo -e "\033[33m[INFO]\033[34m Bin: $(TERRAFORM_BIN)\033[39m"
+	@echo -e "\033[33m[INFO]\033[34m TFVer: $(TFVER)\033[39m"
 
 define GENTARGETS
 
 $(eval TARGET = $(subst /,-,$(subst terraform/environments/,,$(DIR))))
 
 $(addprefix .tf-init-,$(TARGET)):
+	$(call PRINT,INFO,We're initializing the $(TARGET) environment)
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) init -reconfigure
 
 .PHONY: $(addprefix tf-init-,$(TARGET))
@@ -86,6 +101,13 @@ $(addprefix .tf-output-,$(TARGET)):
 .PHONY: $(addprefix tf-output-,$(TARGET))
 $(addprefix tf-output-,$(TARGET)):tf-output-%: all .tf-output-$(TARGET) ## Show the output that exist in the deployments
 
+$(addprefix .tf-provider-,$(TARGET)):
+	$(call PRINT,INFO,Following you will see the list of providers in $(TARGET) environment)
+	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) providers
+
+.PHONY: $(addprefix tf-provider-,$(TARGET))
+$(addprefix tf-provider-,$(TARGET)):tf-provider-%: all .tf-provider-$(TARGET) ## Show the providers that exist in the folders
+
 $(addprefix .tf-list-resources-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) show | grep "#"
 
@@ -107,6 +129,12 @@ $(addprefix .tf-create-graph-,$(TARGET)):
 
 .PHONY: $(addprefix tf-create-graph-,$(TARGET))
 $(addprefix tf-create-graph-,$(TARGET)):tf-create-graph-%: all .tf-create-graph-$(TARGET) ## Generate a graph of the environment structure
+
+$(addprefix .tf-check-format-,$(TARGET)):
+	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) graph | dot -Tsvg > environment.svg
+
+.PHONY: $(addprefix tf-check-format-,$(TARGET))
+$(addprefix tf-check-format-,$(TARGET)):tf-check-format-%: all .tf-check-format-$(TARGET) ## Check if the Terraform format is fine
 
 endef
 
@@ -134,10 +162,10 @@ ansible_run: ansible/root.yml .requirements ## Run all task necessary for the co
 upload: encrypt .upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 .PHONY: download
-download: .download .decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
+download: .download decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting
 
-.PHONY: 16_connect
-16_connect: .decrypt .connect .encrypt ## Connect to the remote instance with the key for deployment
+.PHONY: connect
+connect: decrypt .connect encrypt ## Connect to the remote instance with the key for deployment
 
 #.PHONY: 17_poweron
 #17_poweron: all .decrypt .setEnviVar .poweron .deploy_check .encrypt # # Power on the instance
@@ -151,16 +179,17 @@ encrypt: .encrypt-all ## Encrypt files for uploading to repository
 .PHONY: decrypt
 decrypt: .decrypt-all ## Decrypt files for working with them
 
-21_soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
+.PHONY: soft_clean
+soft_clean: ## Clean the project, this only remove all Roles and temporary files, use with careful
 	@rm -fR ansible/roles/*
-	@rm -fR .terraform/
 	@rm -f /tmp/terraform*
 	@rm -f terraform.log
 	@rm -f environment.svg
 	@rm -fR ./*.backup
+	@find . -name .terraform* -exec rm -fR {} \;
 
-.PHONY: 22_hard_clean
-22_hard_clean: 21_soft_clean .removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
+.PHONY: hard_clean
+hard_clean: soft_clean .removeTerraform --clean$(OS) ## Clean the project, !!WARNING¡¡ all data storage in roles folder be removed, and the programs using deleted too!!!
 
 #-------------------------------------------------------#
 #    Private Functions                                  #

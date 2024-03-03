@@ -7,4 +7,5 @@ module "vmws_frontend" {
   path         = each.value.path
   processors   = each.value.processors
   memory       = each.value.memory
+  state        = each.value.state
 }

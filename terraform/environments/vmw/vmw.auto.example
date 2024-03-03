@@ -1,9 +1,15 @@
 # Variables Generals for all resources
-ssh_user    = ""
-public_key  = ""
-private_key = ""
+ssh_user    = "centos"
+public_key  = "~/.ssh/id_rsa_deploying.pub"
+private_key = "~/.ssh/id_rsa_deploying"
 # Variables for the VmWare Workstation provider
-vmws_frontend_name       = ""
-vmws_frontend_image      = ""
-vmws_frontend_processors = ""
-vmws_frontend_memory     = ""
+list_of_vms = {
+  "test-vm1" = {
+    sourceid    = ""
+    description = "The new VM"
+    path        = "C:\\VirtualMachines"
+    processors  = "2"
+    memory      = "1024"
+    state       = "on"
+  },
+}

@@ -14,6 +14,7 @@ variable "description" {
 variable "path" {
   type        = string
   description = "(Required) The path where the instance is deployed "
+  default = "D:\\VirtualMachines"
 }
 # variable "image" {
 #   type        = string
@@ -30,4 +31,8 @@ variable "memory" {
   description = "(Required) The size of memory to the Virtual Machine"
   default     = "512"
 }
-   
+variable "state" {
+  type        = string
+  description = "(Optional) The Power State desired in the Virtual Machine"
+  default     = "off"
+}  
