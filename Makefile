@@ -131,7 +131,7 @@ ansible_run: ansible/root.yml .requirements ## Run all task necessary for the co
 	@ansible-playbook ansible/root.yml --diff --vault-password-file $(VAULT_ANSIBLE)/credentials.txt --inventory ansible/inventory $(EXTRA)
 
 .PHONY: upload
-upload: .encrypt .upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
+upload: encrypt .upload ## Encrypt vault files and add, commit the files with message, for e.g. upload MESSAGE="Add files"
 
 .PHONY: download
 download: .download .decrypt ## Downloading the files and decrypt vault files for editing ¡¡WARNING!! this operation remove all changes without commiting

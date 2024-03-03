@@ -6,6 +6,7 @@ fabric/fabfile.py
 *.tfstate
 *.tfstate.backup
 *.json
+*.txt
 \terraform.log
 \*.svg
 \test.php

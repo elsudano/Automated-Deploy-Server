@@ -1,18 +1,3 @@
-provider "azurerm" {
-  version = "~>2.15.0"
-  features {
-    key_vault {
-      recover_soft_deleted_key_vaults = true
-      purge_soft_delete_on_destroy    = true
-    }
-    virtual_machine {
-      delete_os_disk_on_deletion = true
-    }
-    virtual_machine_scale_set {
-      roll_instances_when_required = true
-    }
-  }
-}
 module "azure_resource_group" {
   source                      = "../../modules/others/azure_resource_group"
   arm_resource_group_name     = var.arm_resource_group_name

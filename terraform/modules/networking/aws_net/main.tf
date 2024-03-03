@@ -73,6 +73,5 @@ resource "aws_subnet" "aws_subnet" {
   }
 }
 resource "aws_eip" "aws_eip" {
-  vpc = true
   depends_on                = [aws_internet_gateway.aws_gateway]
 }
