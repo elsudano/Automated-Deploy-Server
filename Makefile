@@ -83,6 +83,13 @@ $(addprefix .tf-apply-,$(TARGET)):
 .PHONY: $(addprefix tf-apply-,$(TARGET))
 $(addprefix tf-apply-,$(TARGET)):tf-apply-%: all .tf-apply-$(TARGET) ## Deploy new infrastructure for environment to setting in ENVI var
 
+$(addprefix .tf-refresh-,$(TARGET)):
+	$(call PRINT,INFO,We trying to Refresh the state of the $(TARGET) environment)
+	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) refresh
+
+.PHONY += $(addprefix tf-refresh-,$(TARGET))
+$(addprefix tf-refresh-,$(TARGET)):tf-refresh-%: all .tf-refresh-$(TARGET) ## We can see the differences between real-infrastructure and code
+
 $(addprefix .tf-destroy-,$(TARGET)):
 	source $(VAULT_ANSIBLE)/env_vars.sh; $(TERRAFORM_BIN) -chdir=$(DIR) destroy
 
