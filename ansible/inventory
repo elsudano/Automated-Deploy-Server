@@ -16,3 +16,17 @@ google ansible_ssh_user=centos ansible_host=mync.sudano.net short_host=server
 ovh ansible_ssh_user=root ansible_host=nc.sudano.net short_host=server
 
 nas ansible_ssh_user=root ansible_host=myserver short_host=nas
+
+[k8s]
+master
+node1
+node2
+node3
+
+master ansible_ssh_user=usuario ansible_host=master.casa.local short_host=master
+
+node1 ansible_ssh_user=usuario ansible_host=node1.casa.local short_host=node1
+
+node2 ansible_ssh_user=usuario ansible_host=node2.casa.local short_host=node2
+
+node3 ansible_ssh_user=usuario ansible_host=node3.casa.local short_host=node3
